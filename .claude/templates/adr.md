@@ -1,50 +1,50 @@
-# ADR-<NNNN>: <başlık>
+# ADR-<NNNN>: <title>
 
-**Durum:** Önerilen | Kabul edildi | Reddedildi | Değiştirildi (ADR-MMMM ile)
-**Tarih:** <YYYY-MM-DD>
-**Onay:** cto
-**İlgili gereksinimler:** <REQ-* / NFR-*>
+**Status:** Proposed | Accepted | Rejected | Superseded (by ADR-MMMM)
+**Date:** <YYYY-MM-DD>
+**Approval:** cto
+**Related requirements:** <REQ-* / NFR-*>
 
-## Bağlam
+## Context
 
-<Hangi güçler bu kararı zorluyor. Gereksinim referanslı, tek paragraf.
-Karar verilmezse ne olur.>
+<Which forces drive this decision. Requirement-referenced, one paragraph.
+What happens if no decision is made.>
 
-## Değerlendirilen seçenekler
+## Options considered
 
-*En az 3 — biri "hiçbir şey yapma / mevcut haliyle devam" olmalı.*
+*At least 3 — one of them must be "do nothing / keep the status quo".*
 
-| Seçenek | Artı | Eksi | Neden elendi |
+| Option | Pros | Cons | Why eliminated |
 |---|---|---|---|
 | A) <...> | | | |
 | B) <...> | | | |
-| C) Değiştirme | | | |
+| C) No change | | | |
 
-## Karar
+## Decision
 
-<Emir kipinde tek paragraf: "X kullanacağız.">
+<One paragraph, imperative: "We will use X.">
 
-## Sonuçlar
+## Consequences
 
-**Olumlu**
+**Positive**
 - <...>
 
-**Olumsuz / kabul ettiğimiz maliyet**
+**Negative / cost we accept**
 - <...>
 
-**Geri dönüş maliyeti:** düşük | orta | yüksek — <tek cümle>
+**Reversal cost:** low | medium | high — <one sentence>
 
-## Uygulama rehberi
+## Implementation guidance
 
-*Bu bölüm story dosyalarına kopyalanır. Geliştirici ADR'yi açmayacak —
-o kadar somut yaz.*
+*This section gets copied into story files. The developer will not open the ADR —
+write it that concretely.*
 
-- **Nerede:** <dosya/katman>
-- **Zorunlu desen:** <kod düzeyinde tarif>
-- **Yasak desen:** <...>
-- **Yapılandırma / isimlendirme:** <...>
+- **Where:** <file/layer>
+- **Required pattern:** <described at code level>
+- **Forbidden pattern:** <...>
+- **Configuration / naming:** <...>
 
-## Doğrulama
+## Verification
 
-<Bu kararın uygulandığını nasıl kontrol ederiz: test, lint kuralı,
-kod incelemesi maddesi veya mimari fitness fonksiyonu.>
+<How we check this decision was applied: a test, a lint rule, a code review item,
+or an architecture fitness function.>

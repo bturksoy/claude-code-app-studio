@@ -1,114 +1,114 @@
 ---
 name: status
-description: Proje durum panosu üretir — faz, sprint, ilerleme, bloke işler, açık kapılar, riskler ve token kullanım notu. Ardından tek bir sonraki adım önerir.
+description: Produces the project status dashboard — phase, sprint, progress, blocked work, open gates, risks and a token-usage note. Then suggests a single next step.
 ---
 
 # /status
 
-Sahip: `delivery-manager`. **Varsayılan olarak agent çağırmaz** — dosya okur.
+Owner: `delivery-manager`. **Invokes no agents by default** — it reads files.
 
 ---
 
-## 1. Veri topla (hepsi ucuz)
+## 1. Gather the data (all cheap)
 
-| Kaynak | Ne alınır |
+| Source | What is taken |
 |---|---|
-| `.state/project.json` | faz, sprint, mod, ölçek, sayaçlar, yığın |
-| `docs/CONTEXT.md` | mevcut odak, bilinen borç |
-| `product/sprints/sprint-NN.md` | görev dağılımı ve durumlar |
-| Story dosyaları (başlık blokları) | durum, sahip, tip |
-| `.state/gates.jsonl` | kapı geçmişi, açık ŞARTLI maddeler |
-| `product/risks.md` | aktif riskler |
-| `docs/qa/bugs/` | açık hatalar (başlık blokları) |
-| `.state/agent-log.jsonl` | agent çağrı sayısı (token notu için) |
+| `.state/project.json` | phase, sprint, mode, scale, counters, stack |
+| `docs/CONTEXT.md` | current focus, known debt |
+| `product/sprints/sprint-NN.md` | assignments and statuses |
+| Story files (header blocks) | status, owner, type |
+| `.state/gates.jsonl` | gate history, open CONDITIONAL items |
+| `product/risks.md` | active risks |
+| `docs/qa/bugs/` | open bugs (header blocks) |
+| `.state/agent-log.jsonl` | agent call count (for the token note) |
 
-## 2. Panoyu üret
+## 2. Produce the dashboard
 
 ```
-╭─ <Proje adı> ────────────────────────────────────────────
-│ Faz: <faz>   Sprint: <NN>   Mod: <mod>   Ölçek: <ölçek>
-│ Yığın: <özet>
+╭─ <Project name> ─────────────────────────────────────────
+│ Phase: <phase>   Sprint: <NN>   Mode: <mode>   Scale: <scale>
+│ Stack: <summary>
 ╰───────────────────────────────────────────────────────────
 
-İLERLEME
-  Epic     ████████░░  <a>/<b>
-  Story    ██████░░░░  <c>/<d> DONE
-  Sprint <NN>  Gün <x>/<y>
+PROGRESS
+  Epics    ████████░░  <a>/<b>
+  Stories  ██████░░░░  <c>/<d> DONE
+  Sprint <NN>  Day <x>/<y>
 
-SPRINT <NN> — <hedef>
-| Story | Sahip | Tip | Durum |
+SPRINT <NN> — <goal>
+| Story | Owner | Type | Status |
 | 004 | backend-developer | Logic | DONE |
-| 005 | frontend-developer | UI | Devam ediyor |
-| 006 | test-engineer | Integration | Bloke ⚠ |
+| 005 | frontend-developer | UI | In progress |
+| 006 | test-engineer | Integration | Blocked ⚠ |
 
-BLOKE (<n>)
-  story-006 — <neden> → <kime escalate edilmeli>
+BLOCKED (<n>)
+  story-006 — <reason> → <who it should be escalated to>
 
-AÇIK KAPI KOŞULLARI (<n>)
-  ARCH-DESIGN ŞARTLI — <n> madde açık
+OPEN GATE CONDITIONS (<n>)
+  ARCH-DESIGN CONDITIONAL — <n> items open
 
-RİSKLER (aktif, yüksek)
-  | Risk | Olasılık×Etki | Sahip | Önlem |
+RISKS (active, high)
+  | Risk | Probability×Impact | Owner | Mitigation |
 
-AÇIK HATALAR
+OPEN BUGS
   P0: <a>  P1: <b>  P2: <c>
 
-TEKNİK BORÇ
-  <CONTEXT.md'den, en fazla 3 satır>
+TECHNICAL DEBT
+  <from CONTEXT.md, at most 3 lines>
 
-TOKEN NOTU
-  Bu sprintte <N> agent çağrısı, <M> kapı, mod=<mod>.
-  <N>30 ise: "Görev paketleri yetersiz — /stories çıktısına ADR özeti ve
-  dosya yolları eklenmeli."
+TOKEN NOTE
+  This sprint: <N> agent calls, <M> gates, mode=<mode>.
+  <if N>30: "Task packets are inadequate — /stories output should include ADR
+  summaries and file paths.">
 
-▶ SONRAKİ ADIM
-  <tek komut> — <tek cümle gerekçe>
+▶ NEXT STEP
+  <a single command> — <one-sentence rationale>
 ```
 
-## 3. Sonraki adım kararı
+## 3. Deciding the next step
 
-Öncelik sırası (ilk eşleşen kazanır):
-
-```
-1. Bloke story var           → escalation önerisi (hangi role, ne sorulacak)
-2. Açık ŞARTLI kapı maddesi  → o maddeleri kapatan komut
-3. Açık P0 hata              → /dev-task <düzeltme story>
-4. Sprint devam ediyor       → /dev-task <kritik yoldaki sıradaki story>
-5. Sprint story'leri bitti   → /dod-check sprint
-6. Sprint kapandı            → /retro → /sprint-plan
-7. Faz story'leri bitti      → /release <sürüm>
-8. Faz kapandı               → /roadmap (sonraki faz) veya /requirements
-```
-
-## 4. `/status --deep` modu
-
-Kullanıcı derin analiz isterse `delivery-manager` çağır:
+Priority order (the first match wins):
 
 ```
-<PANO VERİSİ>
-Son 2 sprintin story tamamlanma oranı: <veri>
-Tahmin vs gerçek: <veri>
-
-Görev: Teslimat sağlığı analizi.
-1. Hız (velocity) eğilimi — hızlanıyor mu, yavaşlıyor mu, neden
-2. Tahmin doğruluğu — sistematik sapma var mı
-3. Darboğaz rolü — hangi agent sürekli kritik yolda
-4. Süreç sorunu — tekrar eden bloke nedenleri
-5. En fazla 3 somut iyileştirme önerisi
+1. A blocked story           → an escalation suggestion (to which role, what to ask)
+2. An open CONDITIONAL item  → the command that closes those items
+3. An open P0 bug            → /dev-task <fix story>
+4. Sprint in progress        → /dev-task <next story on the critical path>
+5. Sprint stories finished   → /dod-check sprint
+6. Sprint closed             → /retro → /sprint-plan
+7. Phase stories finished    → /release <version>
+8. Phase closed              → /roadmap (next phase) or /requirements
 ```
 
-Bu mod isteğe bağlıdır ve tek agent çağırır.
+## 4. `/status --deep` mode
 
-## 5. Güncelle
+If the user wants a deeper analysis, invoke `delivery-manager`:
 
-`docs/CONTEXT.md`'nin "Şu an ne yapılıyor" bölümünü panodan güncelle.
+```
+<DASHBOARD DATA>
+Story completion rate over the last 2 sprints: <data>
+Estimate vs actual: <data>
+
+Task: delivery health analysis.
+1. Velocity trend — accelerating or slowing, and why
+2. Estimate accuracy — is there a systematic bias
+3. Bottleneck role — which agent is constantly on the critical path
+4. Process problem — recurring causes of blocking
+5. At most 3 concrete improvement suggestions
+```
+
+This mode is optional and invokes a single agent.
+
+## 5. Update
+
+Refresh the "Current work" section of `docs/CONTEXT.md` from the dashboard.
 `.state/project.json` → `lastUpdated`.
 
 ---
 
-## Token notu
+## Token note
 
-- Varsayılan mod **tamamen bedava** — sadece dosya okuma.
-- Story dosyalarının **başlık bloklarını** oku (ilk 8 satır), tamamını değil.
-- Her oturumun başında `/status` çalıştırmak, sonraki adımların doğru
-  bağlamla başlamasını sağlar — dolaylı ama büyük tasarruf.
+- The default mode is **entirely free** — file reads only.
+- Read the **header blocks** of story files (first 8 lines), not their full contents.
+- Running `/status` at the start of every session makes the following steps start with the
+  right context — an indirect but large saving.

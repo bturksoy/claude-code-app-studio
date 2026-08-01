@@ -1,94 +1,94 @@
-# Story <NNN>: <başlık>
+# Story <NNN>: <title>
 
-> **Epic:** <ad> | **Tip:** <Logic|Integration|Data|UI|Infra|Config> | **Sahip:** <agent>
-> **Durum:** Hazır | **Tahmin:** <XS/S/M/L> | **Sprint:** — | **Güncellenme:** <YYYY-MM-DD>
+> **Epic:** <name> | **Type:** <Logic|Integration|Data|UI|Infra|Config> | **Owner:** <agent>
+> **Status:** Ready | **Estimate:** <XS/S/M/L> | **Sprint:** — | **Updated:** <YYYY-MM-DD>
 
-## Ne yapılacak
+## What to build
 
-<2-3 cümle. Geliştiricinin ilk okuyacağı şey. Somut ve teknik.>
+<2-3 sentences. The first thing the developer reads. Concrete and technical.>
 
-## Kabul kriterleri
+## Acceptance criteria
 
-*Kaynak: REQ-<ID> — buraya kopyalandı, referans değil*
+*Source: REQ-<ID> — copied here, not referenced*
 
-- [ ] **AC-1:** <kriter>
-  - Given: <önkoşul>
-  - When: <eylem>
-  - Then: <gözlemlenebilir sonuç>
-- [ ] **AC-2:** <kriter>
+- [ ] **AC-1:** <criterion>
+  - Given: <precondition>
+  - When: <action>
+  - Then: <observable result>
+- [ ] **AC-2:** <criterion>
   - Given: <...>
   - When: <...>
   - Then: <...>
 
-## İş kuralları
+## Business rules
 
-*Kaynak: REQ-<ID> — kopyalandı*
+*Source: REQ-<ID> — copied*
 
-- **BR-1:** <kural>
-- **BR-2:** <kural>
+- **BR-1:** <rule>
+- **BR-2:** <rule>
 
-## Hata ve sınır durumları
+## Errors and edge cases
 
-| Durum | Beklenen davranış | Kullanıcıya mesaj |
+| Case | Expected behaviour | Message to user |
 |---|---|---|
 | | | |
 
-## Uygulanacak mimari kararlar
+## Architecture decisions to apply
 
-*ADR-<NNNN>: <başlık>*
+*ADR-<NNNN>: <title>*
 
-<ADR'nin "Uygulama rehberi" bölümü buraya kopyalanır.
-Geliştirici ADR dosyasını açmayacak.>
+<The ADR's "Implementation guidance" section is copied here.
+The developer will not open the ADR file.>
 
-**Zorunlu desen:** <...>
-**Yasak desen:** <...>
+**Required pattern:** <...>
+**Forbidden pattern:** <...>
 
-## Sözleşme
+## Contract
 
-*İlgili endpoint / tablo / komponent tanımları — kopyalandı*
+*Relevant endpoint / table / component definitions — copied*
 
 ```yaml
-# openapi.yaml'dan ilgili bölüm
+# relevant section from openapi.yaml
 ```
 
 ```sql
--- ER.md / schema.sql'den ilgili tablo
+-- relevant table from ER.md / schema.sql
 ```
 
-## Dokunulacak dosyalar
+## Files to touch
 
-*Tespit edilmiş yollar — tahmin değil*
+*Identified paths — not guesses*
 
-- `<yol>` — <ne yapılacak>
-- `<test yolu>` — yeni
+- `<path>` — <what changes>
+- `<test path>` — new
 
-## Kapsam DIŞI
+## Out of scope
 
-*Komşu story'ler halleder — burada yapma*
+*Neighbouring stories handle these — do not do them here*
 
-- Story <NNN+1>: <ne>
+- Story <NNN+1>: <what>
 
-## Test senaryoları
+## Test scenarios
 
-*QA Lead tarafından yazıldı. Sıfırdan test icat etme.*
+*Written by the QA Lead. Do not invent tests from scratch.*
 
 **TC-<REQ>-01** — AC-1
 - Given: <...> | When: <...> | Then: <...>
-- Sınır durumları: <...>
-- Öncelik: P0
+- Edge cases: <...>
+- Priority: P0
 
-## Zorunlu kanıt
+## Required evidence
 
-**Tip:** <tip>
-**Gereken:** <DoD'den tipin zorunlu kanıtı>
-**Dosya:** `tests/<yol>/<slug>.test.<ext>`
-**Durum:** [ ] Henüz oluşturulmadı
+**Type:** <type>
+**Required:** <the type's mandatory evidence, from the DoD>
+**File:** `tests/<path>/<slug>.test.<ext>`
+**Status:** [ ] Not yet created
 
-## Bağımlılıklar
+## Dependencies
 
-**Önce bitmeli:** <story-NNN veya Yok>
-**Bunu bekliyor:** <story-NNN veya Yok>
+**Must finish first:** <story-NNN or None>
+**Waiting on this:** <story-NNN or None>
 
-## İzlenebilirlik
+## Traceability
 
-REQ-<ID> → GOAL-<NN> | ADR-<NNNN> | Ekran: <varsa>
+REQ-<ID> → GOAL-<NN> | ADR-<NNNN> | Screen: <if any>

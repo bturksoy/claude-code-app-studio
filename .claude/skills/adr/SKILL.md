@@ -1,110 +1,110 @@
 ---
 name: adr
-description: Mimari Karar Kaydı (ADR) üretir. Bir teknik kararı, değerlendirilen alternatifleri, sonuçlarını ve uygulama rehberini kalıcı olarak kaydeder. Geliştiricinin story içinde göreceği talimatlar burada üretilir.
+description: Produces an Architecture Decision Record (ADR). Permanently records a technical decision, the alternatives considered, the consequences, and the implementation guidance. The instructions the developer sees inside a story are produced here.
 ---
 
-# /adr "<karar konusu>"
+# /adr "<decision topic>"
 
-Sahip: `solution-architect`, onay: `cto`.
-Çıktı: `docs/architecture/adr/ADR-NNNN-<slug>.md`
-
----
-
-## 1. Numara ve konu
-
-`docs/architecture/adr/` içindeki en büyük numarayı Glob ile bul, +1 al.
-Argüman yoksa `adr/index.md`'deki "Önerilen" listesinden seç veya kullanıcıya sor.
-
-## 2. ADR gerektiren durumlar (kontrol et)
-
-Bunlardan biri değilse ADR yazma — `docs/DECISIONS.md`'ye tek satır yeter:
-- Yeni bağımlılık / kütüphane / servis
-- Veri saklama veya modelleme yaklaşımı
-- Kimlik doğrulama / yetkilendirme yaklaşımı
-- Entegrasyon deseni (senkron/asenkron, kuyruk, webhook)
-- Eşzamanlılık veya tutarlılık modeli
-- Hata/yeniden deneme/geri alma stratejisi
-- Sürümleme veya geriye uyumluluk politikası
-- Geri dönülemez herhangi bir seçim
-
-## 3. `solution-architect` çağır
-
-```
-Karar konusu: <konu>
-Bağlam: <CONTEXT.md özeti + ilgili NFR'ler + mevcut yığın>
-İlgili gereksinimler: <REQ/NFR listesi>
-Mevcut ADR'ler: <adr/index.md'deki başlıklar — çelişki kontrolü için>
-
-Görev: ADR-<NNNN> üret.
-
-## Bağlam
-Hangi güçler bu kararı zorluyor — REQ/NFR referanslı, 1 paragraf
-
-## Değerlendirilen seçenekler
-En az 3 (biri "hiçbir şey yapma / mevcut haliyle devam" olmalı).
-| Seçenek | Artı | Eksi | Neden elendi |
-
-## Karar
-Emir kipinde tek paragraf: "X kullanacağız."
-
-## Sonuçlar
-Olumlu: | Olumsuz (kabul ettiğimiz maliyet): | Geri dönüş maliyeti: düşük/orta/yüksek
-
-## Uygulama rehberi
-KRİTİK BÖLÜM — bu, story dosyalarına kopyalanacak.
-Geliştiricinin ADR'yi açmasına gerek kalmayacak kadar somut yaz:
-- Hangi dosya/katmanda ne yapılır
-- Zorunlu desen (kod düzeyinde tarif)
-- Yasak desen
-- Yapılandırma / isimlendirme kuralı
-
-## Doğrulama
-Bu kararın uygulandığını nasıl kontrol ederiz: test, lint kuralı,
-kod incelemesi maddesi veya mimari fitness fonksiyonu.
-
-Mevcut bir ADR ile çelişiyorsa BELİRT — hangi ADR, nasıl çelişiyor.
-```
-
-## 4. `cto` onayı (lean+ mod)
-
-```
-<ADR TASLAĞI — tam metin>
-
-Görev: Onayla veya geri çevir.
-Kriterler: alternatifler gerçekten değerlendirilmiş mi (samimi mi),
-sonuçlar dürüst yazılmış mı, NFR'lere karşılık geliyor mu,
-daha basit bir seçenek yanlışlıkla elenmiş mi, çıkış maliyeti kabul edilebilir mi.
-
-Yanıtına "ADR-<NNNN>: KABUL|ŞARTLI|RET" satırıyla başla.
-```
-
-`solo` modda atla; durum doğrudan `Kabul edildi` olur.
-
-## 5. Yaz
-
-- `docs/architecture/adr/ADR-NNNN-<slug>.md` — durum: `Kabul edildi` veya `Önerilen`
-- `docs/architecture/adr/index.md`'ye satır ekle:
-  `| ADR-NNNN | <başlık> | Kabul edildi | <tarih> | <etkilediği alan> |`
-- `docs/DECISIONS.md`'ye tek satır ekle
-- Bir ADR'yi **değiştiriyorsa**: eski ADR'nin durumunu `Değiştirildi (ADR-MMMM ile)`
-  yap, içeriğini **silme**
-
-## 6. Kapat
-
-```
-✓ ADR-<NNNN>: <başlık> — <durum>
-  Etkilediği: <REQ/modül listesi>
-
-Uygulama rehberi story'lere kopyalanacak (/stories bunu otomatik yapar).
-
-▶ Sonraki: <varsa bir sonraki önerilen ADR> veya /data-model | /api-contract
-```
+Owner: `solution-architect`, approval: `cto`.
+Output: `docs/architecture/adr/ADR-NNNN-<slug>.md`
 
 ---
 
-## Token notu
+## 1. Number and topic
 
-- **1-2 agent çağrısı.** ADR taslağı CTO'ya tam gömülür (kısa bir doküman).
-- Mevcut ADR'lerden sadece **index başlıkları** gömülür, içerikleri değil.
-- "Uygulama rehberi" bölümüne yatırım yap — bu bölüm sayesinde geliştirici
-  agent ADR dosyasını hiç açmaz. Doğrudan token tasarrufu.
+Find the highest number under `docs/architecture/adr/` with Glob and add 1.
+If there is no argument, pick from the "Proposed" list in `adr/index.md` or ask the user.
+
+## 2. Situations that require an ADR (check first)
+
+If it is none of these, do not write an ADR — one line in `docs/DECISIONS.md` is enough:
+- A new dependency / library / service
+- A data storage or modelling approach
+- An authentication / authorization approach
+- An integration pattern (sync/async, queue, webhook)
+- A concurrency or consistency model
+- An error/retry/rollback strategy
+- A versioning or backward-compatibility policy
+- Any irreversible choice
+
+## 3. Invoke `solution-architect`
+
+```
+Decision topic: <topic>
+Context: <CONTEXT.md summary + relevant NFRs + current stack>
+Related requirements: <REQ/NFR list>
+Existing ADRs: <titles from adr/index.md — for conflict checking>
+
+Task: produce ADR-<NNNN>.
+
+## Context
+Which forces drive this decision — requirement-referenced, one paragraph
+
+## Options considered
+At least 3 (one must be "do nothing / keep the status quo").
+| Option | Pros | Cons | Why eliminated |
+
+## Decision
+One paragraph, imperative: "We will use X."
+
+## Consequences
+Positive: | Negative (cost we accept): | Reversal cost: low/medium/high
+
+## Implementation guidance
+CRITICAL SECTION — this gets copied into story files.
+Write it concretely enough that the developer never needs to open the ADR:
+- Which file/layer does what
+- The required pattern (described at code level)
+- The forbidden pattern
+- Configuration / naming rules
+
+## Verification
+How we check this decision was applied: a test, a lint rule, a code review item,
+or an architecture fitness function.
+
+If it conflicts with an existing ADR, SAY SO — which ADR, and how.
+```
+
+## 4. `cto` approval (lean+ mode)
+
+```
+<ADR DRAFT — full text>
+
+Task: approve or reject.
+Criteria: were the alternatives genuinely evaluated (in good faith),
+are the consequences written honestly, does it satisfy the NFRs,
+was a simpler option eliminated by mistake, is the exit cost acceptable.
+
+Begin your reply with "ADR-<NNNN>: ACCEPTED|CONDITIONAL|REJECTED".
+```
+
+Skip in `solo` mode; the status becomes `Accepted` directly.
+
+## 5. Write
+
+- `docs/architecture/adr/ADR-NNNN-<slug>.md` — status `Accepted` or `Proposed`
+- Append a row to `docs/architecture/adr/index.md`:
+  `| ADR-NNNN | <title> | Accepted | <date> | <area affected> |`
+- Append one line to `docs/DECISIONS.md`
+- If it **supersedes** an existing ADR: set the old one's status to
+  `Superseded (by ADR-MMMM)` and **do not delete its content**
+
+## 6. Close
+
+```
+✓ ADR-<NNNN>: <title> — <status>
+  Affects: <REQ/module list>
+
+The implementation guidance will be copied into stories (/stories does this automatically).
+
+▶ Next: <the next suggested ADR, if any> or /data-model | /api-contract
+```
+
+---
+
+## Token note
+
+- **1-2 agent calls.** The ADR draft is embedded in full for the CTO (it is a short document).
+- Only the **index titles** of existing ADRs are embedded, never their contents.
+- Invest in the "Implementation guidance" section — because of it, the developer agent
+  never opens the ADR file. That is a direct token saving.

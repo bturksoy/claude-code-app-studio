@@ -1,89 +1,89 @@
-# Altyapı ve CI/CD Kuralları
+# Infrastructure and CI/CD Rules
 
-**Kapsam:** `infra/**`, `.github/**`, `.gitlab-ci.yml`, `Dockerfile*`, `docker-compose*`,
+**Scope:** `infra/**`, `.github/**`, `.gitlab-ci.yml`, `Dockerfile*`, `docker-compose*`,
 `*.tf`, `*.yaml` (k8s), `Jenkinsfile`
 
 ---
 
-## Temel ilkeler
+## Core principles
 
-1. **Her şey kodda.** Konsoldan yapılan ve IaC'ye geri yazılmayan değişiklik
-   yapılmamış sayılır.
-2. **Ortamlar aynı tanımdan üretilir.** Fark sadece parametrede.
-3. **Geri alma bir özelliktir.** Deploy'dan önce yazılır ve test edilir.
-4. **Artefakt bir kez build edilir**, tüm ortamlara aynısı gider.
+1. **Everything in code.** A change made in a console and not written back to IaC
+   counts as not made.
+2. **Environments come from the same definition.** Only parameters differ.
+3. **Rollback is a feature.** It is written before deployment and tested.
+4. **The artifact is built once** and the same one goes to every environment.
 
-## Secret yönetimi
+## Secret management
 
-- `.env`, anahtar, sertifika, credential **versiyonlanmaz**
-- `.env.example` boş değerlerle repoda bulunur (dokümantasyon amaçlı)
-- Secret referans olarak geçer, değer olarak değil
-- CI log'unda secret maskelenir
-- Secret rotasyonu runbook'ta tanımlı
+- `.env`, keys, certificates and credentials are **not versioned**
+- `.env.example` lives in the repo with empty values (for documentation)
+- Secrets are passed as references, not values
+- Secrets are masked in CI logs
+- Secret rotation is defined in the runbook
 
 ## Pipeline
 
 ```
-1. Kurulum + bağımlılık önbelleği
+1. Setup + dependency cache
 2. Lint + format
-3. Tip kontrolü
-4. Unit testler (+ kapsam eşiği)
+3. Type check
+4. Unit tests (+ coverage threshold)
 5. Build
-6. Integration testler (geçici veritabanı)
-7. Güvenlik: bağımlılık taraması + secret taraması
-8. Artefakt (sürüm etiketli, değişmez)
-9. [main] staging deploy → smoke → onay → prod
+6. Integration tests (ephemeral database)
+7. Security: dependency scan + secret scan
+8. Artifact (version-tagged, immutable)
+9. [main] staging deploy → smoke → approval → prod
 ```
 
-Kurallar:
-- Pipeline < 10 dakika. Aşarsa paralelleştir veya böl
-- Kırık main tolere edilmez
-- Testler pipeline'da atlanamaz (`--skip-tests` yasak)
-- Deploy adımı **manuel onay** ister (prod için)
+Rules:
+- Pipeline < 10 minutes. If longer, parallelize or split
+- A broken main is not tolerated
+- Tests cannot be skipped in the pipeline (`--skip-tests` is forbidden)
+- The deploy step requires **manual approval** (for production)
 
-## Container
+## Containers
 
-- Çok aşamalı build (multi-stage) — üretim imajında build araçları olmaz
-- Root olmayan kullanıcı ile çalıştır
-- Sabit taban imaj etiketi (`:latest` yasak), tercihen digest
-- `.dockerignore` mevcut ve etkin
-- Sağlık kontrolü tanımlı
-- İmaj boyutu makul (gereksiz katman/dosya yok)
+- Multi-stage build — no build tooling in the production image
+- Run as a non-root user
+- Pinned base image tag (`:latest` is forbidden), preferably a digest
+- `.dockerignore` present and effective
+- Health check defined
+- Reasonable image size (no unnecessary layers or files)
 
-## Kubernetes / orkestrasyon (kullanılıyorsa)
+## Kubernetes / orchestration (if used)
 
-- Kaynak istekleri ve limitleri tanımlı
-- Liveness ve readiness probe'ları **ayrı ve doğru** (readiness bağımlılıkları kontrol eder)
-- `imagePullPolicy` ve etiketleme tutarlı
-- ConfigMap ve Secret ayrımı doğru
-- PodDisruptionBudget ve replika sayısı kullanılabilirlik NFR'ine uygun
+- Resource requests and limits defined
+- Liveness and readiness probes are **separate and correct** (readiness checks dependencies)
+- `imagePullPolicy` and labelling are consistent
+- Correct separation of ConfigMap and Secret
+- PodDisruptionBudget and replica count match the availability NFR
 
 ## Terraform / IaC
 
-- Uzak state, kilitlemeli
-- `plan` çıktısı incelenmeden `apply` yok
-- Modül sürümleri sabitlenmiş
-- Kaynak silme koruması kritik kaynaklarda açık
-- `apply` **kullanıcı onayı olmadan çalıştırılmaz**
+- Remote state with locking
+- No `apply` without reviewing the `plan` output
+- Module versions pinned
+- Deletion protection enabled on critical resources
+- `apply` **is never run without user approval**
 
-## Gözlemlenebilirlik
+## Observability
 
-- Log: yapılandırılmış (JSON), korelasyon kimliği, gizli veri maskeli
-- Metrik: RED (istek/hata/gecikme) + kaynak kullanımı + iş metrikleri
-- Alarm: **her alarmın bir sahibi ve bir runbook adımı olmalı**. Sahipsiz alarm silinir
-- Sağlık uçları: `/health` (canlılık), `/ready` (bağımlılıklar dahil)
-- Log saklama süresi ve maliyeti tanımlı
+- Logs: structured (JSON), correlation id, secrets masked
+- Metrics: RED (rate/errors/duration) + resource usage + business metrics
+- Alerts: **every alert has an owner and a runbook step**. Ownerless alerts are deleted
+- Health endpoints: `/health` (liveness), `/ready` (including dependencies)
+- Log retention period and cost defined
 
-## Ortamlar
+## Environments
 
-Her ortam için `docs/ops/environments.md` içinde tanımlı:
-amaç, URL, veri tipi, kim deploy eder, onay gerekiyor mu, ölçek, yedekleme.
+Each environment is defined in `docs/ops/environments.md`: purpose, URL, data type,
+who deploys, approval requirement, scale, backups.
 
-## Yasaklar
+## Prohibitions
 
-- **Kullanıcı onayı olmadan:** deploy, `terraform apply`, `kubectl delete`,
-  üretimde migration, DNS değişikliği
-- Secret değerini okumak, yazmak veya ekrana basmak
-- Üretim verisini silmek veya üzerine yazmak
-- Manuel "hızlı düzeltme" — her değişiklik koddan geçer
-- Test ortamına üretim verisini anonimleştirmeden kopyalamak
+- **Without user approval:** deploy, `terraform apply`, `kubectl delete`,
+  production migrations, DNS changes
+- Reading, writing or printing secret values
+- Deleting or overwriting production data
+- Manual "quick fixes" — every change goes through code
+- Copying production data to a test environment without anonymization

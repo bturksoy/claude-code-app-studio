@@ -1,141 +1,144 @@
 ---
 name: epics
-description: Faz kapsamındaki gereksinimleri epic'lere böler. Her epic bir yetenek grubunu, ilgili gereksinimleri, mimari katmanı ve bağımlılıkları taşır. Story kırılımının bir üst seviyesidir.
+description: Splits the phase's requirements into epics. Each epic carries a capability group, its requirements, the architectural layer and its dependencies. One level above the story breakdown.
 ---
 
-# /epics [faz]
+# /epics [phase]
 
-Sahip: `product-owner` + `solution-architect` (paralel).
-Çıktı: `product/backlog/epics/<slug>/EPIC.md` + `product/backlog/index.md`
+Owner: `product-owner` + `solution-architect` (in parallel).
+Outputs: `product/backlog/epics/<slug>/EPIC.md` + `product/backlog/index.md`
 
-Ön koşul: `FRD.md` + `ROADMAP.md` + `ARCHITECTURE.md`
+Prerequisite: `FRD.md` + `ROADMAP.md` + `ARCHITECTURE.md`
 
 ---
 
-## 1. Kapsam
+## 1. Scope
 
-Argüman yoksa `ROADMAP.md`'den mevcut fazı al. O fazın REQ listesini çıkar.
+Without an argument, take the current phase from `ROADMAP.md` and extract that phase's
+REQ list.
 
-## 2. Paralel çağrı (tek mesaj)
+## 2. Parallel call (one message)
 
-### Çağrı A — `product-owner`
-
-```
-Faz: <ad> — <hipotez>
-REQ tablosu: <ID | başlık | öncelik | aktör>
-Yetenekler: <FEAT tablosu>
-
-Görev: Bu fazı epic'lere böl.
-- Her epic KULLANICI DEĞERİ etrafında toplanır, teknik katman etrafında değil
-  ("Kullanıcı yönetimi" ✓ / "Backend API'leri" ✗)
-- Her epic 3-8 story üretecek büyüklükte
-- Her epic bir cümlelik değer ifadesi taşır: "<aktör> <şunu> yapabilir, böylece <fayda>"
-- Epic sırası: kullanıcı değeri en erken görünen önce
-- Her REQ tam olarak bir epic'e atanmalı — atanmayan varsa listele
-
-Çıktı: | Epic slug | Ad | Değer ifadesi | REQ listesi | Öncelik |
-```
-
-### Çağrı B — `solution-architect`
+### Call A — `product-owner`
 
 ```
-Faz: <ad>
-REQ tablosu: <ID | başlık>
-Mimari: <konteyner ve modül listesi + bağımlılık yönü kuralı>
-ADR listesi: <ID | başlık | etkilediği alan>
-API endpoint listesi: <path + method>
-Veri modeli: <tablo listesi>
+Phase: <name> — <hypothesis>
+REQ table: <id | title | priority | actor>
+Capabilities: <FEAT table>
 
-Görev: Teknik kırılım kısıtlarını çıkar.
-1. Teknik katman sırası: hangi işler diğerlerinden önce bitmeli
-   (sözleşme → veri → servis → arayüz)
-2. Her REQ için: hangi modüllere dokunur, hangi ADR'ler geçerli
-3. Yürüyen iskelet: uçtan uca çalışan en ince dilim hangi REQ'lerden oluşur
-4. Riskli/belirsiz REQ'ler: önce spike gerektirenler
-5. Aynı modüle dokunan REQ'ler (paralel çalışılamayacaklar)
+Task: split this phase into epics.
+- Each epic groups around USER VALUE, not a technical layer
+  ("User management" ✓ / "Backend APIs" ✗)
+- Each epic should be sized to produce 3-8 stories
+- Each epic carries a one-sentence value statement:
+  "<actor> can <do X>, so that <benefit>"
+- Epic ordering: earliest visible user value first
+- Every REQ must be assigned to exactly one epic — list any that are not
 
-Çıktı tablo halinde, kısa.
+Output: | Epic slug | Name | Value statement | REQ list | Priority |
 ```
 
-## 3. Birleştir (sen yaparsın)
-
-PO'nun değer bazlı epic'lerine SA'nın teknik kısıtlarını ekle:
-- Her epic'e: dokunulan modüller, geçerli ADR'ler, teknik ön koşullar
-- Epic sırasını teknik bağımlılığa göre düzelt (değer sırası ile çelişirse
-  çelişkiyi kullanıcıya göster)
-- Yürüyen iskelet epic'ini **ilk sıraya** al
-
-## 4. Sun
+### Call B — `solution-architect`
 
 ```
-## Epic Kırılımı — Faz <N>
+Phase: <name>
+REQ table: <id | title>
+Architecture: <container and module list + dependency direction rule>
+ADR list: <id | title | area affected>
+API endpoint list: <path + method>
+Data model: <table list>
 
-| # | Epic | Değer | REQ | Modüller | ADR | Bağımlı |
+Task: derive the technical breakdown constraints.
+1. Technical layer ordering: which work must finish before other work
+   (contract → data → service → interface)
+2. For each REQ: which modules it touches, which ADRs govern it
+3. Walking skeleton: which REQs make up the thinnest end-to-end slice
+4. Risky/uncertain REQs: which ones need a spike first
+5. REQs that touch the same module (cannot be worked in parallel)
 
-Yürüyen iskelet: <epic>
-Sıra gerekçesi: <tek paragraf>
-⚠ Atanmamış REQ: <varsa>
-⚠ Değer sırası ↔ teknik sıra çelişkisi: <varsa>
+Output as tables, brief.
 ```
 
-`AskUserQuestion` ile onay al.
+## 3. Merge (you do this)
 
-## 5. Yaz
+Add the architect's technical constraints to the PO's value-based epics:
+- Per epic: modules touched, governing ADRs, technical preconditions
+- Correct the epic ordering for technical dependencies (if it conflicts with the value
+  ordering, show the conflict to the user)
+- Put the walking-skeleton epic **first**
 
-Her epic için `product/backlog/epics/<slug>/EPIC.md`:
+## 4. Present
+
+```
+## Epic Breakdown — Phase <N>
+
+| # | Epic | Value | REQs | Modules | ADR | Depends on |
+
+Walking skeleton: <epic>
+Ordering rationale: <one paragraph>
+⚠ Unassigned REQs: <if any>
+⚠ Value order ↔ technical order conflict: <if any>
+```
+
+Get approval via `AskUserQuestion`.
+
+## 5. Write
+
+`product/backlog/epics/<slug>/EPIC.md` for each epic:
 
 ```markdown
-# Epic: <ad>
-> **Faz:** <N> | **Öncelik:** <n> | **Durum:** Hazır | **Sıra:** <n>
+# Epic: <name>
+> **Phase:** <N> | **Priority:** <n> | **Status:** Ready | **Order:** <n>
 
-## Değer
-<aktör> <şunu> yapabilir, böylece <fayda>.
+## Value
+<actor> can <do X>, so that <benefit>.
 
-## Kapsanan gereksinimler
-| REQ | Başlık | Öncelik | Kabul kriteri sayısı |
+## Requirements covered
+| REQ | Title | Priority | AC count |
 
-## Teknik bağlam
-**Dokunulan modüller:** <liste>
-**Geçerli ADR'ler:** <ADR-NNNN: başlık — 1 satır karar özeti>
-**API endpoint'leri:** <liste>
-**Veri tabloları:** <liste>
-**Ekranlar:** <UX envanterinden>
+## Technical context
+**Modules touched:** <list>
+**Governing ADRs:** <ADR-NNNN: title — one-line decision summary>
+**API endpoints:** <list>
+**Data tables:** <list>
+**Screens:** <from the UX inventory>
 
-## Bağımlılıklar
-Önce bitmesi gereken: <epic listesi veya Yok>
-Bunu bekleyen: <epic listesi veya Yok>
+## Dependencies
+Must finish first: <epic list or None>
+Waiting on this: <epic list or None>
 
-## Story'ler
-*Henüz oluşturulmadı — `/stories <slug>` çalıştır*
+## Stories
+*Not yet created — run `/stories <slug>`*
 
-## Tamamlanma kriteri
-<epic ne zaman biter — ölçülebilir>
+## Completion criterion
+<when this epic is done — measurable>
 ```
 
-Ayrıca `product/backlog/index.md`:
+Also `product/backlog/index.md`:
 
 ```markdown
 # Backlog
-| # | Epic | Faz | REQ | Story | Durum | Bağımlı |
+| # | Epic | Phase | REQs | Stories | Status | Depends on |
 ```
 
-`.state/project.json` → `counters.epics` güncelle.
+Update `counters.epics` in `.state/project.json`.
 
-## 6. Kapat
+## 6. Close
 
 ```
-✓ <N> epic → product/backlog/epics/
-  Faz <M> | <K> REQ kapsandı
+✓ <N> epics → product/backlog/epics/
+  Phase <M> | <K> REQs covered
 
-▶ Sonraki: /stories <ilk-epic-slug>
-   İlk epic'i story'lere böl. Sırayla ilerle — bağımlılık sırası önemli.
+▶ Next: /stories <first-epic-slug>
+   Break the first epic into stories. Work through them in order — dependency
+   ordering matters.
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **2 paralel agent çağrısı**, birleştirme model tarafından yapılır.
-- REQ'ler **başlık tablosu** olarak gömülür, tam metin değil.
-- ADR'ler sadece **başlık + 1 satır karar** olarak; tam ADR story'de gömülecek.
-- Tüm fazların epic'lerini birden yazma — sadece mevcut faz.
+- **2 parallel agent calls**; the merge is done by the model.
+- REQs are embedded as a **heading table**, not full text.
+- ADRs only as **title + one-line decision**; the full ADR gets embedded in the story.
+- Do not write epics for every phase at once — only the current one.

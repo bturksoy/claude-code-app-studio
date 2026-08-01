@@ -1,116 +1,117 @@
 ---
 name: kickoff
-description: Yeni projeyi başlatır. Proje fikrini alır, CEO ile iş hedeflerini ve başarı metriklerini netleştirir, proje ölçeğine göre agent kadrosunu ve inceleme modunu belirler, dizin yapısını ve durum dosyalarını kurar.
+description: Starts a new project. Takes the project idea, works with the CEO to define business goals and success metrics, selects the agent roster and review mode based on project scale, and sets up the directory structure and state files.
 ---
 
-# /kickoff "<proje fikri>"
+# /kickoff "<project idea>"
 
-Faz 0. Çıktı: `product/00-brief.md`, `.state/project.json`, `docs/CONTEXT.md` iskeleti,
-dizin yapısı ve seçilmiş kadro.
+Phase 0. Outputs: `product/00-brief.md`, `.state/project.json`, a `docs/CONTEXT.md`
+skeleton, the directory structure and the selected roster.
 
 ---
 
-## 1. Girdiyi al
+## 1. Take the input
 
-Argüman yoksa sor: *"Ne inşa etmek istiyorsun? Tek cümle yeterli."*
+If there is no argument, ask: *"What do you want to build? One sentence is enough."*
 
-Argümanı **olduğu gibi** sakla — yorumlama, genişletme.
+Keep the argument **verbatim** — do not interpret or expand it.
 
-## 2. Netleştirme turu (agent çağırmadan, ucuz)
+## 2. Clarification round (no agents — cheap)
 
-`AskUserQuestion` ile **tek seferde 4 soru** sor. Bunlar kadro ve mod seçimini belirler:
+Ask **four questions in a single call** via `AskUserQuestion`. These determine the
+roster and mode:
 
-**Soru 1 — Proje tipi**
-`Web uygulaması` / `Mobil uygulama` / `API / Backend servis` / `Masaüstü veya CLI`
+**Question 1 — Project type**
+`Web application` / `Mobile application` / `API / backend service` / `Desktop or CLI`
 
-**Soru 2 — Ölçek ve ciddiyet**
-- `Prototip` — fikri test etmek, hızlı, tek kişilik
-- `Standart ürün (Önerilen)` — gerçek kullanıcılar, bakımı yapılacak
-- `Kurumsal / regüle` — uyumluluk, denetim, çok ekipli
+**Question 2 — Scale and seriousness**
+- `Prototype` — testing an idea, fast, one person
+- `Standard product (Recommended)` — real users, will be maintained
+- `Enterprise / regulated` — compliance, audit, multiple teams
 
-**Soru 3 — Kullanıcı kim**
-- `Kendim / iç ekip` / `Küçük işletmeler` / `Genel tüketici` / `Başka bir yazılım (API tüketicisi)`
+**Question 3 — Who is the user**
+- `Myself / internal team` / `Small businesses` / `General consumers` / `Another system (API consumer)`
 
-**Soru 4 — En kritik kısıt**
-- `Hız — bir an önce çalışsın`
-- `Doğruluk — hata kabul edilemez (para/sağlık/hukuk)`
-- `Ölçek — çok kullanıcı olacak`
-- `Maliyet — işletme gideri düşük olmalı`
+**Question 4 — The most critical constraint**
+- `Speed — make it work as soon as possible`
+- `Correctness — errors are unacceptable (money/health/legal)`
+- `Scale — there will be many users`
+- `Cost — operating expense must stay low`
 
-## 3. Ölçeğe göre kadro ve mod belirle
+## 3. Derive the roster and mode from scale
 
-| Ölçek | Mod | Aktif roller |
+| Scale | Mode | Active roles |
 |---|---|---|
-| Prototip | `solo` | product-owner, solution-architect, backend-developer, frontend-developer, test-engineer |
-| Standart | `lean` | + business-analyst, ux-designer, ui-designer, sql-developer, devops-engineer, qa-lead, code-reviewer, delivery-manager |
-| Kurumsal | `full` | Tam kadro (19) |
+| Prototype | `solo` | product-owner, solution-architect, backend-developer, frontend-developer, test-engineer |
+| Standard | `lean` | + business-analyst, ux-designer, ui-designer, sql-developer, devops-engineer, qa-lead, code-reviewer, delivery-manager |
+| Enterprise | `full` | Full roster (19) |
 
-4. sorunun cevabı kadroyu ayarlar:
-- `Doğruluk` → `security-engineer` + `qa-lead` her ölçekte aktif
-- `Ölçek` → `performance-engineer` + `devops-engineer` aktif
-- `Maliyet` → `devops-engineer` aktif, `cto` maliyet kısıtını TECH-STRATEGY'ye yazar
+The answer to question 4 adjusts the roster:
+- `Correctness` → `security-engineer` + `qa-lead` active at every scale
+- `Scale` → `performance-engineer` + `devops-engineer` active
+- `Cost` → `devops-engineer` active; the `cto` records the cost constraint in TECH-STRATEGY
 
-Seçimi kullanıcıya **göster ve onayla**:
+**Show and confirm** the selection with the user:
 ```
-Kadro: <liste>
-Mod: <mod> — <ne anlama geldiği tek cümle>
-Devre dışı: <liste> — <neden>
-Bunlar sonradan değiştirilebilir (product/review-mode.txt).
-```
-
-## 4. CEO ile iş çerçevesi
-
-`ceo` agent'ını çağır. Prompt'a **göm** (dosya okutma):
-
-```
-Proje fikri: <argüman>
-Tip: <cevap 1> | Ölçek: <cevap 2> | Kullanıcı: <cevap 3> | Kısıt: <cevap 4>
-
-Görev:
-1. En fazla 3 ölçülebilir iş hedefi (GOAL-01..03) öner. Her biri için:
-   hedef değer, ölçüm yöntemi, ölçüm zamanı.
-2. MVP'de OLMAYACAKLAR listesi çıkar (en az 5 madde) — bu, kapsamı korur.
-3. En riskli 3 varsayımı ve her birinin nasıl test edileceğini yaz.
-4. Bu projenin başarısız olma senaryosunu tek paragrafta yaz.
-
-Kısa yaz. Yanıtına "CEO-VISION: ONAY|ŞARTLI|RET" satırıyla başla.
-Belirsizlik varsa varsayım yapma — "SORU:" satırı aç.
+Roster: <list>
+Mode: <mode> — <one sentence on what it means>
+Disabled: <list> — <why>
+These can be changed later (product/review-mode.txt).
 ```
 
-CEO'nun `SORU:` satırları varsa `AskUserQuestion` ile kullanıcıya sor,
-cevapları alıp CEO'ya **tek seferde** geri gönder (ikinci tur, en fazla bir kez).
+## 4. Business framing with the CEO
 
-## 5. Brief'i sun ve onay al
-
-Yazmadan önce özet göster:
+Invoke the `ceo` agent. **Embed** the following in the prompt (do not have it read files):
 
 ```
-## <Proje adı>
-<tek cümlelik tanım>
+Project idea: <argument>
+Type: <answer 1> | Scale: <answer 2> | User: <answer 3> | Constraint: <answer 4>
 
-Hedefler
-  GOAL-01: <ölçülebilir hedef>
+Task:
+1. Propose at most 3 measurable business goals (GOAL-01..03). For each:
+   target value, measurement method, measurement time.
+2. Produce a list of what will NOT be in the MVP (at least 5 items) — this protects scope.
+3. Write the 3 riskiest assumptions and how each will be tested.
+4. Write the failure scenario for this project in one paragraph.
+
+Be brief. Begin your reply with "CEO-VISION: APPROVED|CONDITIONAL|REJECTED".
+If something is unclear, do not assume — open a "QUESTION:" line.
+```
+
+If the CEO returns `QUESTION:` lines, ask the user via `AskUserQuestion`, then send the
+answers back to the CEO **in a single follow-up** (second round, at most once).
+
+## 5. Present the brief and get approval
+
+Show a summary before writing:
+
+```
+## <Project name>
+<one-sentence description>
+
+Goals
+  GOAL-01: <measurable goal>
   GOAL-02: ...
 
-MVP'de olmayacak
-  - <madde>
+Not in the MVP
+  - <item>
 
-Riskli varsayımlar
-  - <varsayım> → <nasıl test edilir>
+Risky assumptions
+  - <assumption> → <how it is tested>
 
-Kadro: <liste>  |  Mod: <mod>
+Roster: <list>  |  Mode: <mode>
 ```
 
 `AskUserQuestion`:
-- `Onayla ve kur (Önerilen)`
-- `Hedefleri değiştireceğim`
-- `Kadroyu/modu değiştireceğim`
+- `Approve and set up (Recommended)`
+- `I want to change the goals`
+- `I want to change the roster/mode`
 
-## 6. Dosyaları oluştur
+## 6. Create the files
 
-Onay sonrası:
+After approval:
 
-**Dizinler** (boş dizinlere `.gitkeep`):
+**Directories** (`.gitkeep` in empty ones):
 ```
 product/{prd,requirements,roadmap/phases,backlog/epics,sprints}
 docs/{architecture/adr,api,data,design/{ux/flows,ux/wireframes,system/components},qa/{test-cases,evidence,performance,bugs},security,ops,guides}
@@ -119,86 +120,86 @@ src tests/{unit,integration,e2e,performance} db/{migrations,seeds} infra .state
 
 **`product/00-brief.md`**
 ```markdown
-# <Proje> — İş Özeti
-**Tarih:** <bugün> | **Ölçek:** <ölçek> | **Tip:** <tip>
+# <Project> — Business Brief
+**Date:** <today> | **Scale:** <scale> | **Type:** <type>
 
-## Tek cümlede
-<tanım>
+## In one sentence
+<description>
 
 ## Problem
-<CEO çıktısından>
+<from the CEO output>
 
-## Hedef kullanıcı
-<cevap 3 + detay>
+## Target user
+<answer 3 + detail>
 
-## İş hedefleri
-| ID | Hedef | Hedef değer | Ölçüm | Ne zaman |
+## Business goals
+| ID | Goal | Target value | Measurement | When |
 |---|---|---|---|---|
 | GOAL-01 | | | | |
 
-## MVP'de olmayacaklar
-- <madde> — <neden>
+## Not in the MVP
+- <item> — <why>
 
-## Riskli varsayımlar
-| # | Varsayım | Nasıl test edilir | Yanlışsa ne olur |
+## Risky assumptions
+| # | Assumption | How it is tested | What if it is wrong |
 
-## Kısıtlar
-<kritik kısıt + varsa bütçe/takvim/teknoloji kısıtı>
+## Constraints
+<critical constraint + any budget/schedule/technology constraint>
 
-## Başarısızlık senaryosu
-<CEO'nun yazdığı paragraf>
+## Failure scenario
+<the paragraph written by the CEO>
 ```
 
-**`product/review-mode.txt`** → tek satır: `<mod>`
+**`product/review-mode.txt`** → a single line: `<mode>`
 
 **`.state/project.json`**
 ```json
 {
-  "project": "<ad>",
+  "project": "<name>",
   "phase": "discovery",
-  "reviewMode": "<mod>",
-  "scale": "<ölçek>",
+  "reviewMode": "<mode>",
+  "scale": "<scale>",
   "activeRoles": [...],
   "currentSprint": null,
   "openGateConditions": 0,
   "stack": {},
   "counters": {"epics":0,"stories":0,"done":0,"bugs":0},
-  "lastUpdated": "<bugün>"
+  "lastUpdated": "<today>"
 }
 ```
 
-**`docs/CONTEXT.md`** — `.claude/docs/context-protocol.md`'deki şablonu doldur
-(bilinmeyen alanlar `<henüz belirlenmedi>`).
+**`docs/CONTEXT.md`** — fill in the template from `.claude/docs/context-protocol.md`
+(unknown fields become `<not yet determined>`).
 
 **`docs/DECISIONS.md`**
 ```markdown
-# Karar Günlüğü
-| Tarih | Karar | Veren | Gerekçe | Referans |
+# Decision Log
+| Date | Decision | By | Rationale | Reference |
 |---|---|---|---|---|
-| <bugün> | Ölçek=<ölçek>, mod=<mod> | kullanıcı | /kickoff | — |
+| <today> | scale=<scale>, mode=<mode> | user | /kickoff | — |
 ```
 
-**`product/risks.md`** — CEO'nun riskli varsayımlarını risk kaydına dönüştür.
+**`product/risks.md`** — turn the CEO's risky assumptions into risk-register entries.
 
-**`.state/gates.jsonl`** — CEO-VISION verdiktini ilk satır olarak yaz.
+**`.state/gates.jsonl`** — write the CEO-VISION verdict as the first line.
 
-## 7. Kapat
+## 7. Close
 
 ```
-✓ <Proje> kuruldu.
+✓ <Project> is set up.
 
-Hedefler: GOAL-01..NN  |  Kadro: <N> rol  |  Mod: <mod>
+Goals: GOAL-01..NN  |  Roster: <N> roles  |  Mode: <mode>
 
-▶ Sonraki: /discovery
-   Product Owner ve Business Analyst kafa kafaya verip projeyi detaylandıracak.
+▶ Next: /discovery
+   The Product Owner and Business Analyst will work through the project together.
 ```
 
-`AskUserQuestion` ile: `Şimdi /discovery çalıştır (Önerilen)` / `Önce brief'i okuyacağım`
+`AskUserQuestion`: `Run /discovery now (Recommended)` / `I'll read the brief first`
 
 ---
 
-## Token notu
+## Token note
 
-- Bu skill **tek agent** çağırır (`ceo`), en fazla iki tur.
-- Netleştirme soruları agent'a değil kullanıcıya sorulur — bedava.
-- Dizin oluşturmayı tek Bash çağrısında yap.
+- This skill invokes **one agent** (`ceo`), at most two rounds.
+- Clarification questions go to the user, not to an agent — that is free.
+- Create the directories in a single Bash call.

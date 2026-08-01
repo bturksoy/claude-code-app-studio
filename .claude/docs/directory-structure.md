@@ -1,123 +1,123 @@
-# Dizin Yapısı
+# Directory Structure
 
 ```
 .
-├── CLAUDE.md                    Sistem anayasası (her oturumda yüklenir — kısa tut)
-├── README.md                    İnsan için giriş
+├── CLAUDE.md                    System constitution (loaded every session — keep it short)
+├── README.md                    Human-facing introduction
 │
 ├── .claude/
-│   ├── settings.json            Model, izinler, hook'lar
-│   ├── agents/*.md              19 rol tanımı
-│   ├── skills/*/SKILL.md        Slash komutları (iş akışları)
-│   ├── rules/*.md               Yol-kapsamlı kodlama kuralları
-│   ├── hooks/*.ps1|sh           Otomatik denetimler
-│   ├── templates/*.md           Doküman şablonları
-│   └── docs/*.md                Bu dosya dahil sistem dokümanları
+│   ├── settings.json            Models, permissions, hooks
+│   ├── agents/*.md              19 role definitions
+│   ├── skills/*/SKILL.md        Slash commands (workflows)
+│   ├── rules/*.md               Path-scoped coding rules
+│   ├── hooks/*.ps1              Automated checks
+│   ├── templates/*.md           Document templates
+│   └── docs/*.md                System documentation, including this file
 │
-├── product/                     ÜRÜN KATMANI (iş dili)
-│   ├── 00-brief.md              İş özeti, hedefler (GOAL-*), başarı metrikleri
-│   ├── vision.md                Uzun vadeli ürün vizyonu
+├── product/                     PRODUCT LAYER (business language)
+│   ├── 00-brief.md              Business summary, goals (GOAL-*), success metrics
+│   ├── vision.md                Long-term product vision
 │   ├── review-mode.txt          full | lean | solo
-│   ├── risks.md                 Risk kaydı
-│   ├── prd/PRD.md               Ürün gereksinim dokümanı
+│   ├── risks.md                 Risk register
+│   ├── prd/PRD.md               Product requirements document
 │   ├── requirements/
-│   │   ├── FRD.md               Fonksiyonel gereksinimler (REQ-*)
-│   │   ├── NFR.md               Fonksiyonel olmayan gereksinimler (NFR-*)
-│   │   └── data-dictionary.md   İş terimleri ve veri tanımları
+│   │   ├── FRD.md               Functional requirements (REQ-*)
+│   │   ├── NFR.md               Non-functional requirements (NFR-*)
+│   │   └── data-dictionary.md   Domain terms and data definitions
 │   ├── roadmap/
-│   │   ├── ROADMAP.md           Fazlar, sürümler, kilometre taşları
-│   │   └── phases/phase-N.md    Faz detayı ve çıkış kriterleri
+│   │   ├── ROADMAP.md           Phases, releases, milestones
+│   │   └── phases/phase-N.md    Phase detail and exit criteria
 │   ├── backlog/
-│   │   ├── index.md             Tüm epic'lerin tablosu
+│   │   ├── index.md             Table of all epics
 │   │   └── epics/<slug>/
 │   │       ├── EPIC.md
 │   │       └── story-NNN-<slug>.md
 │   └── sprints/
 │       ├── index.md
-│       └── sprint-NN.md         Sprint hedefi, görev dağılımı, kapasite
+│       └── sprint-NN.md         Sprint goal, assignments, capacity
 │
-├── docs/                        TEKNİK KATMAN
-│   ├── CONTEXT.md               ★ Proje beyni — her agent ilk bunu okur (≤200 satır)
-│   ├── DECISIONS.md             Karar günlüğü (append-only)
+├── docs/                        TECHNICAL LAYER
+│   ├── CONTEXT.md               ★ Project brain — every agent reads this first (≤200 lines)
+│   ├── DECISIONS.md             Decision log (append-only)
 │   ├── architecture/
-│   │   ├── ARCHITECTURE.md      Bileşenler, sınırlar, veri akışı, dağıtım topolojisi
-│   │   ├── TECH-STRATEGY.md     CTO'nun teknoloji duruşu
+│   │   ├── ARCHITECTURE.md      Components, boundaries, data flow, deployment topology
+│   │   ├── TECH-STRATEGY.md     The CTO's technology stance
 │   │   └── adr/
 │   │       ├── index.md
 │   │       └── ADR-NNNN-<slug>.md
 │   ├── api/
-│   │   ├── openapi.yaml         ★ API tek gerçek kaynağı
-│   │   └── events.md            Asenkron mesaj/event sözleşmeleri
+│   │   ├── openapi.yaml         ★ Single source of truth for the API
+│   │   └── events.md            Asynchronous message/event contracts
 │   ├── data/
-│   │   ├── ER.md                Varlık-ilişki modeli
-│   │   └── migrations.md        Migration stratejisi ve sırası
+│   │   ├── ER.md                Entity-relationship model
+│   │   └── migrations.md        Migration strategy and ordering
 │   ├── design/
-│   │   ├── ux/                  Persona, akış, IA, wireframe
-│   │   └── system/              Design token, komponent spesifikasyonları
+│   │   ├── ux/                  Personas, flows, IA, wireframes
+│   │   └── system/              Design tokens, component specifications
 │   ├── qa/
-│   │   ├── strategy.md          Test stratejisi ve piramidi
-│   │   ├── test-plan.md         Sürüm bazlı test planı
-│   │   ├── test-cases/          Senaryolar (Given/When/Then)
-│   │   ├── evidence/            Manuel doğrulama kanıtları
-│   │   ├── performance/         Yük testi sonuçları ve bütçeler
-│   │   └── bugs/BUG-NNN.md      Hata kayıtları
+│   │   ├── strategy.md          Test strategy and pyramid
+│   │   ├── test-plan.md         Release-scoped test plan
+│   │   ├── test-cases/          Scenarios (Given/When/Then)
+│   │   ├── evidence/            Manual verification evidence
+│   │   ├── performance/         Load test results and budgets
+│   │   └── bugs/BUG-NNN.md      Bug reports
 │   ├── security/
-│   │   ├── threat-model.md      STRIDE tehdit modeli
-│   │   └── checklist.md         OWASP kontrol listesi sonuçları
+│   │   ├── threat-model.md      STRIDE threat model
+│   │   └── checklist.md         OWASP checklist results
 │   ├── ops/
-│   │   ├── environments.md      Ortamlar, değişkenler, erişim
-│   │   ├── runbook.md           Operasyon prosedürleri, olay müdahalesi
-│   │   └── release-NNN.md       Sürüm planı ve rollback
-│   └── guides/                  Kullanıcı ve geliştirici kılavuzları
+│   │   ├── environments.md      Environments, variables, access
+│   │   ├── runbook.md           Operational procedures, incident response
+│   │   └── release-NNN.md       Release plan and rollback
+│   └── guides/                  User and developer guides
 │
-├── src/                         KAYNAK KOD
+├── src/                         SOURCE CODE
 │   ├── frontend/
 │   ├── backend/
-│   ├── shared/                  Ortak tipler, kontrat türevleri
-│   └── data/                    ETL / analitik işleri
+│   ├── shared/                  Shared types, contract derivatives
+│   └── data/                    ETL / analytics jobs
 │
 ├── db/
-│   ├── schema.sql               ★ Şema tek gerçek kaynağı
+│   ├── schema.sql               ★ Single source of truth for the schema
 │   ├── migrations/NNNN_*.sql
 │   └── seeds/
 │
 ├── tests/
 │   ├── unit/  integration/  e2e/  performance/
 │
-├── infra/                       IaC, container, pipeline tanımları
+├── infra/                       IaC, containers, pipeline definitions
 │
 └── .state/
-    ├── project.json             Faz, sprint, aktif roller, sayaçlar
-    ├── gates.jsonl              Kapı geçmişi (append-only)
-    └── agent-log.jsonl          Agent çağrı kaydı (token analizi için)
+    ├── project.json             Phase, sprint, active roles, counters
+    ├── gates.jsonl              Gate history (append-only)
+    └── agent-log.jsonl          Agent invocation log (for token analysis)
 ```
 
-★ işaretli dosyalar **tek gerçek kaynağıdır** — kopyalanmaz, referans verilir.
+Files marked ★ are **single sources of truth** — they are referenced, never copied.
 
 ---
 
-## Adlandırma kuralları
+## Naming conventions
 
-| Öğe | Format | Örnek |
+| Item | Format | Example |
 |---|---|---|
-| İş hedefi | `GOAL-NN` | `GOAL-01` |
-| Fonksiyonel gereksinim | `REQ-<alan>-NNN` | `REQ-AUTH-003` |
-| NFR | `NFR-<kategori>-NN` | `NFR-PERF-02` |
-| Mimari karar | `ADR-NNNN-<slug>.md` | `ADR-0007-event-bus.md` |
-| Epic dizini | `<kebab-slug>/` | `user-management/` |
+| Business goal | `GOAL-NN` | `GOAL-01` |
+| Functional requirement | `REQ-<AREA>-NNN` | `REQ-AUTH-003` |
+| NFR | `NFR-<CATEGORY>-NN` | `NFR-PERF-02` |
+| Architecture decision | `ADR-NNNN-<slug>.md` | `ADR-0007-event-bus.md` |
+| Epic directory | `<kebab-slug>/` | `user-management/` |
 | Story | `story-NNN-<kebab-slug>.md` | `story-004-password-reset.md` |
 | Sprint | `sprint-NN.md` | `sprint-03.md` |
-| Hata | `BUG-NNN.md` | `BUG-021.md` |
-| Test senaryosu | `TC-<REQ-ID>-NN` | `TC-AUTH-003-01` |
+| Bug | `BUG-NNN.md` | `BUG-021.md` |
+| Test case | `TC-<REQ-ID>-NN` | `TC-AUTH-003-01` |
 | Migration | `NNNN_<snake_name>.sql` | `0012_add_user_roles.sql` |
 
 ---
 
-## `.state/project.json` şeması
+## `.state/project.json` schema
 
 ```json
 {
-  "project": "<ad>",
+  "project": "<name>",
   "phase": "discovery|design|build|hardening|release|operate",
   "reviewMode": "lean",
   "scale": "prototype|standard|enterprise",

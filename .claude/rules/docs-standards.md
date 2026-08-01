@@ -1,73 +1,74 @@
-# Dokümantasyon Standartları
+# Documentation Standards
 
-**Kapsam:** `docs/**`, `product/**`, `*.md`
+**Scope:** `docs/**`, `product/**`, `*.md`
 
 ---
 
-## Genel
+## General
 
-- **Tek gerçek kaynağı.** Bir bilgi tek dosyada yaşar. Kopya yerine link ver.
-  İstisna: story dosyalarındaki bilinçli kopyalar (görev paketi ilkesi).
-- **Kaynaksız iddia yazma.** Bir davranış anlatılıyorsa kaynağı belirtilir
-  (`REQ-*`, `ADR-*`, story). Kaynak yoksa `AÇIK:` işaretlenir.
-- **Aktif çatı, kısa cümle, tek fikir.**
-- **Tarih formatı:** `YYYY-MM-DD`. Göreli tarih yazma ("geçen hafta" yasak).
+- **Single source of truth.** A fact lives in one file. Link instead of copying.
+  Exception: the deliberate copies inside story files (the task-packet principle).
+- **No unsourced claims.** If a behaviour is described, its source is cited
+  (`REQ-*`, `ADR-*`, story). If there is no source, mark it `OPEN:`.
+- **Active voice, short sentences, one idea at a time.**
+- **Date format:** `YYYY-MM-DD`. Never write relative dates ("last week" is forbidden).
 
-## Kimlikler
+## Identifiers
 
-Her doküman öğesi bir kimlik taşır ve zincire bağlanır:
+Every document artifact carries an id and links into the chain:
 
 ```
-GOAL-NN → REQ-<ALAN>-NNN → story-NNN → TC-<REQ>-NN
+GOAL-NN → REQ-<AREA>-NNN → story-NNN → TC-<REQ>-NN
                 ↓
             ADR-NNNN
 ```
 
-Kimliksiz gereksinim, hedefe bağlanmayan story yazılmaz.
+Requirements without an id and stories not tied to a goal are not written.
 
-## Boyut limitleri
+## Size limits
 
-| Dosya | Limit | Aşarsa |
+| File | Limit | If exceeded |
 |---|---|---|
-| `docs/CONTEXT.md` | 200 satır | `/context-compact` |
-| `docs/DECISIONS.md` | 300 satır | arşivle |
-| `product/risks.md` | 100 satır | kapananları arşivle |
-| `CLAUDE.md` | 150 satır | detayı `.claude/docs/`'a taşı |
+| `docs/CONTEXT.md` | 200 lines | `/context-compact` |
+| `docs/DECISIONS.md` | 300 lines | archive |
+| `product/risks.md` | 100 lines | archive closed risks |
+| `CLAUDE.md` | 150 lines | move detail into `.claude/docs/` |
 
-## Index dosyaları
+## Index files
 
-Her koleksiyon dizininde `index.md` bulunur ve güncel tutulur:
+Every collection directory has an `index.md` kept current:
 `adr/`, `epics/`, `sprints/`, `test-cases/`, `bugs/`
 
-Index, agent'ların tek dosya okuyup koleksiyona bakmasını sağlar.
+The index lets agents read one file to survey a whole collection.
 
-## Diyagramlar
+## Diagrams
 
-- Mermaid kullan — metin, versiyonlanabilir, ucuz
-- Görsel dosya (png/jpg) yerine metin spesifikasyonu tercih et
-- Her diyagramın altında **tek cümlelik açıklama** bulunur
+- Use Mermaid — text, versionable, cheap
+- Prefer text specifications over image files (png/jpg)
+- Every diagram has a **one-sentence caption** beneath it
 
-## Tablolar
+## Tables
 
-- Başlık satırı zorunlu
-- Boş hücre yerine `—` yaz
-- 6 sütunu geçen tablo bölünür
+- A header row is mandatory
+- Write `—` instead of leaving a cell empty
+- Tables wider than 6 columns get split
 
-## Kod blokları
+## Code blocks
 
-- Dil etiketi zorunlu (` ```sql `, ` ```ts `)
-- Çalıştırılabilir komutlar ` ```bash ` etiketli ve **tek komut** içerir
+- A language tag is mandatory (` ```sql `, ` ```ts `)
+- Runnable commands are tagged ` ```bash ` and contain **one command**
 
-## Değişmezlik
+## Immutability
 
-- `docs/DECISIONS.md` ve `CHANGELOG.md` **append-only** — eski girdiler düzenlenmez
-- Bir ADR değiştirildiğinde eski ADR silinmez; durumu `Değiştirildi (ADR-MMMM ile)` olur
-- Kapatılan hata, risk ve story silinmez; `archive/` veya `deferred/` altına taşınır
+- `docs/DECISIONS.md` and `CHANGELOG.md` are **append-only** — old entries are never edited
+- When an ADR is superseded, the old one is not deleted; its status becomes
+  `Superseded (by ADR-MMMM)`
+- Closed bugs, risks and stories are not deleted; they move to `archive/` or `deferred/`
 
-## Yasaklar
+## Prohibitions
 
-- Pazarlama dili ("güçlü", "sorunsuz", "devrim niteliğinde")
-- Aynı bilgiyi iki dosyada tam metin olarak tutmak
-- Ekran görüntüsü ile metin spesifikasyonunu değiştirmek
-- Kaynağı belirtilmemiş sayısal iddia
-- Ölçülemeyen kabul kriteri veya NFR
+- Marketing language ("powerful", "seamless", "revolutionary")
+- Keeping the same fact as full text in two files
+- Replacing a text specification with a screenshot
+- A numeric claim without a cited source
+- An unmeasurable acceptance criterion or NFR

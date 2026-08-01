@@ -1,79 +1,79 @@
 ---
 name: estimate
-description: Epic veya story listesi için efor tahmini üretir. Belirsizlik bandı, varsayımlar ve tahmini şişiren faktörleri açıkça belirtir.
+description: Produces effort estimates for an epic or story list. States the uncertainty band, the assumptions, and the factors that inflate the estimate.
 ---
 
-# /estimate [kapsam]
+# /estimate [scope]
 
-Sahip: `delivery-manager`. Kapsam: epic slug, story listesi veya boş (→ mevcut backlog).
-
----
-
-## 1. Girdi
-
-Story/epic başlık blokları + tip + bağımlılık + dokunulan modüller.
-Geçmiş veri varsa (tamamlanmış story'lerin tahmin vs gerçek) **onu da göm** —
-kalibrasyon için en değerli girdi budur.
-
-## 2. `delivery-manager` çağır
-
-```
-Kapsam: <epic/story listesi>
-| # | Başlık | Tip | Sahip | AC sayısı | Bağımlı | Modüller |
-
-Geçmiş kalibrasyon (varsa):
-| Story | Tahmin | Gerçek | Sapma |
-
-Proje bağlamı: <yığın, ekip kadrosu, mevcut kod olgunluğu>
-
-Görev: Efor tahmini.
-
-1. Her story için t-shirt boyutu (XS/S/M/L/XL) + gerekçe
-   XS: <2 saat | S: yarım gün | M: 1 gün | L: 2-3 gün | XL: bölünmeli
-2. XL çıkanlar için BÖLME önerisi — XL bir tahmin değil, bir uyarıdır
-3. Belirsizlik seviyesi: her story için Düşük/Orta/Yüksek + neden
-   Yüksek belirsizlik → önce spike öner (zaman kutulu araştırma)
-4. Toplam: iyimser / gerçekçi / kötümser bant
-5. Tahmini şişiren faktörler: bağımlılık bekleme, entegrasyon sürprizi,
-   bilinmeyen üçüncü parti, test verisi hazırlığı
-6. Kalibrasyon notu: geçmiş veriye göre sistematik sapma var mı
-
-Kural: Tek sayı verme, BANT ver. Belirsizliği gizleme.
-```
-
-## 3. Sun
-
-```
-## Efor Tahmini — <kapsam>
-
-| Story | Tip | Boyut | Belirsizlik | Not |
-| 004 | Logic | M | Düşük | — |
-| 007 | Integration | XL | Yüksek | ⚠ Bölünmeli — 3. parti entegrasyon |
-
-Toplam
-  İyimser:   <N> gün
-  Gerçekçi:  <M> gün    ← planlamada bunu kullan
-  Kötümser:  <K> gün
-
-Spike önerilenler: <liste> — <zaman kutusu>
-Bölünmesi gerekenler: <liste>
-
-Şişiren faktörler
-  - <faktör> → <etki>
-
-Kalibrasyon: geçmiş tahminler ortalama %<n> <düşük/yüksek> çıkmış
-  → bu tahmine %<n> ekle/çıkar
-```
-
-## 4. Kaydet
-
-Story dosyalarındaki `**Tahmin:**` alanlarını güncelle.
-Spike gerekenler için backlog'a spike story'si eklemeyi öner.
+Owner: `delivery-manager`. Scope: an epic slug, a story list, or empty (→ the current backlog).
 
 ---
 
-## Token notu
+## 1. Input
 
-- **1 agent çağrısı.**
-- Story dosyalarının başlık bloklarını göm, tam içeriği değil.
-- Geçmiş kalibrasyon verisi tahmin kalitesini en çok artıran girdidir — atlamayın.
+Story/epic header blocks + type + dependencies + modules touched.
+If historical data exists (estimate vs actual for completed stories), **embed it too** —
+it is the most valuable input for calibration.
+
+## 2. Invoke `delivery-manager`
+
+```
+Scope: <epic/story list>
+| # | Title | Type | Owner | AC count | Depends on | Modules |
+
+Historical calibration (if available):
+| Story | Estimate | Actual | Variance |
+
+Project context: <stack, roster, current code maturity>
+
+Task: produce effort estimates.
+
+1. A t-shirt size per story (XS/S/M/L/XL) with rationale
+   XS: <2 hours | S: half a day | M: 1 day | L: 2-3 days | XL: must be split
+2. For anything that comes out XL, propose a SPLIT — XL is not an estimate, it is a warning
+3. Uncertainty level per story: Low/Medium/High + why
+   High uncertainty → propose a spike first (a timeboxed investigation)
+4. Totals: optimistic / realistic / pessimistic band
+5. Factors that inflate the estimate: dependency waits, integration surprises,
+   unknown third parties, test data preparation
+6. Calibration note: is there a systematic bias in the historical data
+
+Rule: never give a single number, give a BAND. Do not hide uncertainty.
+```
+
+## 3. Present
+
+```
+## Effort Estimate — <scope>
+
+| Story | Type | Size | Uncertainty | Note |
+| 004 | Logic | M | Low | — |
+| 007 | Integration | XL | High | ⚠ Must be split — third-party integration |
+
+Totals
+  Optimistic:  <N> days
+  Realistic:   <M> days    ← use this for planning
+  Pessimistic: <K> days
+
+Spikes recommended: <list> — <timebox>
+Must be split: <list>
+
+Inflating factors
+  - <factor> → <impact>
+
+Calibration: historical estimates have run <n>% <low/high> on average
+  → add/subtract <n>% from this estimate
+```
+
+## 4. Record
+
+Update the `**Estimate:**` fields in the story files.
+For anything needing a spike, suggest adding a spike story to the backlog.
+
+---
+
+## Token note
+
+- **1 agent call.**
+- Embed the story header blocks, not their full contents.
+- Historical calibration data improves estimate quality the most — do not skip it.

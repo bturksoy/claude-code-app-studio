@@ -1,36 +1,36 @@
-# Epic: <ad>
+# Epic: <name>
 
-> **Faz:** <N> | **Öncelik:** <n> | **Durum:** Hazır | **Sıra:** <n>
+> **Phase:** <N> | **Priority:** <n> | **Status:** Ready | **Order:** <n>
 
-## Değer
+## Value
 
-<aktör> <şunu> yapabilir, böylece <fayda>.
+<actor> can <do X>, so that <benefit>.
 
-## Kapsanan gereksinimler
+## Requirements covered
 
-| REQ | Başlık | Öncelik | AC sayısı |
+| REQ | Title | Priority | AC count |
 |---|---|---|---|
 
-## Teknik bağlam
+## Technical context
 
-**Dokunulan modüller:** <liste>
-**Geçerli ADR'ler:** <ADR-NNNN: başlık — tek satır karar özeti>
-**API endpoint'leri:** <liste>
-**Veri tabloları:** <liste>
-**Ekranlar:** <UX envanterinden>
+**Modules touched:** <list>
+**Governing ADRs:** <ADR-NNNN: title — one-line decision summary>
+**API endpoints:** <list>
+**Data tables:** <list>
+**Screens:** <from the UX inventory>
 
-## Bağımlılıklar
+## Dependencies
 
-**Önce bitmesi gereken:** <epic listesi veya Yok>
-**Bunu bekleyen:** <epic listesi veya Yok>
+**Must finish first:** <epic list or None>
+**Waiting on this:** <epic list or None>
 
-## Story'ler
+## Stories
 
-*Henüz oluşturulmadı — `/stories <slug>` çalıştır*
+*Not yet created — run `/stories <slug>`*
 
-| # | Story | Tip | Sahip | Durum |
+| # | Story | Type | Owner | Status |
 |---|---|---|---|---|
 
-## Tamamlanma kriteri
+## Completion criterion
 
-<Bu epic ne zaman biter — ölçülebilir>
+<When this epic is done — measurable>

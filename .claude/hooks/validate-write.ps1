@@ -1,6 +1,7 @@
-# App Studio - yazma sonrasi denetim
-# Uyari uretir, ISLEMI ENGELLEMEZ (exit 0). Amac: sessiz kural ihlallerini gorunur kilmak.
-# NOT: Bu dosya bilerek yalnizca ASCII karakter icerir (Windows PowerShell 5.1 uyumu).
+# App Studio - post-write validation
+# Emits warnings, DOES NOT BLOCK the operation (exit 0).
+# Purpose: make silent rule violations visible.
+# NOTE: this file is intentionally ASCII-only (Windows PowerShell 5.1 compatibility).
 
 $ErrorActionPreference = 'SilentlyContinue'
 
@@ -21,65 +22,64 @@ function Get-Text($p) {
     return (Get-Content -LiteralPath $p -Raw -Encoding UTF8 -ErrorAction SilentlyContinue)
 }
 
-# 1. Secret dosyalari
+# 1. Secret files
 if ($name -match '^\.env' -or $norm -match '/secrets/' -or $name -match '\.(pem|key|p12|pfx)$') {
-    $warnings += "SECRET DOSYASI: $name - versiyonlanmamali, icerigi ekrana basilmamali."
+    $warnings += "SECRET FILE: $name - must not be versioned, contents must not be printed."
 }
 
-# 2. Kaynak kodda olasi sabit secret / zayif rastgelelik
+# 2. Hardcoded secrets / weak randomness in source
 if ($norm -match '/(src|infra|db)/') {
     $c = Get-Text $filePath
     if ($c -match '(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*["''][^"'']{12,}["'']') {
-        $warnings += "OLASI SABIT SECRET: $norm - secretlar kodda degil, secret yoneticisinde tutulur."
+        $warnings += "POSSIBLE HARDCODED SECRET: $norm - secrets belong in a secret manager, not in code."
     }
     if ($c -match 'Math\.random\(\)' -and $norm -match '(auth|token|session|crypto|password)') {
-        $warnings += "ZAYIF RASTGELELIK: $norm - guvenlik baglaminda Math.random kullanilmaz."
+        $warnings += "WEAK RANDOMNESS: $norm - Math.random must not be used in a security context."
     }
 }
 
-# 3. Migration geri alinabilirligi
+# 3. Migration reversibility
 if ($norm -match '/migrations/.*\.sql$') {
     $c = Get-Text $filePath
     if ($c -notmatch '(?i)--\s*\+?down') {
-        $warnings += "MIGRATION GERI ALINAMAZ: $norm - down bolumu eksik."
+        $warnings += "IRREVERSIBLE MIGRATION: $norm - the down section is missing."
     }
     if ($c -match '(?i)\b(DROP\s+TABLE|DROP\s+DATABASE|TRUNCATE)\b') {
-        $warnings += "YIKICI SQL: $norm - DROP/TRUNCATE tespit edildi."
+        $warnings += "DESTRUCTIVE SQL: $norm - DROP/TRUNCATE detected."
     }
 }
 
-# 4. Test dosyasinda skip/only
+# 4. skip/only left in a test file
 if ($name -match '\.(test|spec)\.') {
     $c = Get-Text $filePath
     if ($c -match '\b(it|test|describe)\.(only|skip)\b|\bxit\b|\bfdescribe\b') {
-        $warnings += "TEST ISARETI: $norm - skip/only commit edilmemeli."
+        $warnings += "TEST MARKER: $norm - skip/only must not be committed."
     }
 }
 
-# 5. CONTEXT.md boyut limiti
+# 5. CONTEXT.md size limit
 if ($norm -match 'docs/CONTEXT\.md$') {
     $n = (Get-Content -LiteralPath $filePath -Encoding UTF8 | Measure-Object -Line).Lines
     if ($n -gt 200) {
-        $warnings += "CONTEXT.md SISTI: $n satir (limit 200). /context-compact calistirin."
+        $warnings += "CONTEXT.md IS BLOATED: $n lines (limit 200). Run /context-compact."
     }
 }
 
-# 6. Story gorev paketi butunlugu
-#    Turkce baslik karakterlerinden kacinmak icin kisaltilmis desenler kullanilir.
+# 6. Story task-packet completeness
 if ($norm -match '/epics/.*/story-\d+.*\.md$') {
     $c = Get-Text $filePath
     $missing = @()
-    if ($c -notmatch '(?m)^##\s*Kabul kriter')  { $missing += 'Kabul kriterleri' }
-    if ($c -notmatch '(?m)^##\s*Kapsam D')      { $missing += 'Kapsam DISI' }
-    if ($c -notmatch '(?m)^##\s*Zorunlu kan')   { $missing += 'Zorunlu kanit' }
-    if ($c -notmatch '(?m)^##\s*Test senaryo')  { $missing += 'Test senaryolari' }
+    if ($c -notmatch '(?m)^##\s*Acceptance criteria') { $missing += 'Acceptance criteria' }
+    if ($c -notmatch '(?m)^##\s*Out of scope')        { $missing += 'Out of scope' }
+    if ($c -notmatch '(?m)^##\s*Required evidence')   { $missing += 'Required evidence' }
+    if ($c -notmatch '(?m)^##\s*Test scenarios')      { $missing += 'Test scenarios' }
     if ($missing.Count -gt 0) {
-        $warnings += ("STORY EKSIK BOLUM: {0} - {1}. Eksik gorev paketi /dev-task maliyetini artirir." -f $name, ($missing -join ', '))
+        $warnings += ("STORY MISSING SECTIONS: {0} - {1}. An incomplete task packet raises /dev-task cost." -f $name, ($missing -join ', '))
     }
 }
 
 if ($warnings.Count -gt 0) {
-    Write-Output "App Studio denetimi:"
+    Write-Output "App Studio check:"
     foreach ($w in $warnings) { Write-Output ("  ! " + $w) }
 }
 

@@ -1,54 +1,54 @@
 # Sprint <NN> — <YYYY-MM-DD> → <YYYY-MM-DD>
 
-## Sprint hedefi
+## Sprint goal
 
-<Tek cümle. Kullanıcı değeri içermeli. "N story bitirmek" bir hedef değildir.>
+<One sentence. Must contain user value. "Finish N stories" is not a goal.>
 
-## Kapasite
+## Capacity
 
-| Rol | Bu sprintte müsait | Not |
+| Role | Available this sprint | Notes |
 |---|---|---|
 
-Tampon: %20 (hata düzeltme + plansız iş)
+Buffer: 20% (bug fixes + unplanned work)
 
-## Görev dağılımı
+## Assignments
 
-| # | Story | Tip | Sahip | Tahmin | Bağımlı | Gün | Durum |
+| # | Story | Type | Owner | Estimate | Depends on | Day | Status |
 |---|---|---|---|---|---|---|---|
 
-## Kritik yol
+## Critical path
 
-<Sıralı zincir — biri gecikirse sprint gecikir>
+<Ordered chain — if one slips, the sprint slips>
 
-## Paralel bantlar
+## Parallel lanes
 
 ```
-Bant A (sözleşme) : <story> → <agent>          [Gün 1]
-Bant B (veri+servis): <story> → <agent>        [Gün 2-4]
-Bant C (arayüz)   : <story> → <agent> (mock)   [Gün 2-4]
-Entegrasyon       : Gün 4
-Bant D (test)     : <story> → <agent>          [Gün 5]
+Lane A (contract)    : <story> → <agent>          [Day 1]
+Lane B (data+service): <story> → <agent>          [Day 2-4]
+Lane C (interface)   : <story> → <agent> (mocks)  [Day 2-4]
+Integration          : Day 4
+Lane D (testing)     : <story> → <agent>          [Day 5]
 ```
 
-## Riskler
+## Risks
 
-| Risk | Olasılık | Etki | Sahip | Erken uyarı | Önlem |
+| Risk | Probability | Impact | Owner | Early warning | Mitigation |
 |---|---|---|---|---|---|
 
-## Sprint dışı bırakılanlar
+## Left out of this sprint
 
-| Story | Neden |
+| Story | Why |
 |---|---|
 
-## Önceki retro aksiyonları
+## Actions from the previous retro
 
-| # | Aksiyon | Sahip | Durum |
+| # | Action | Owner | Status |
 |---|---|---|---|
 
-## Sprint notları
+## Sprint notes
 
-<Gün gün gelişmeler, bloke olaylar, kararlar>
+<Day-by-day developments, blocking events, decisions>
 
-## Token notu
+## Token note
 
-Agent çağrısı: <N> | Kapı: <M> | Mod: <mod>
+Agent calls: <N> | Gates: <M> | Mode: <mode>

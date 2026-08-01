@@ -1,83 +1,83 @@
-# Backend Kod Kuralları
+# Backend Code Rules
 
-**Kapsam:** `src/backend/**`, `src/api/**`, `src/services/**`, `src/domain/**`
+**Scope:** `src/backend/**`, `src/api/**`, `src/services/**`, `src/domain/**`
 
 ---
 
-## Katmanlar
+## Layers
 
 ```
-domain          → hiçbir şeye bağımlı değil (framework, ORM, HTTP bilmez)
-application     → domain'e bağımlı (kullanım senaryoları, orkestrasyon)
-infrastructure  → application + domain'e bağımlı (DB, HTTP, kuyruk, dış servis)
-interface       → HTTP/CLI/kuyruk giriş noktaları
+domain          → depends on nothing (knows no framework, ORM or HTTP)
+application     → depends on domain (use cases, orchestration)
+infrastructure  → depends on application + domain (DB, HTTP, queues, external services)
+interface       → HTTP/CLI/queue entry points
 ```
 
-Ters yön bağımlılık **yasak**. İş kuralı `domain`'de yaşar — controller'da,
-ORM modelinde veya SQL'de değil.
+Reverse dependencies are **forbidden**. Business rules live in `domain` — not in a
+controller, an ORM model, or SQL.
 
-## Sözleşme
+## Contract
 
-- Yanıt gövdesi ve durum kodları `docs/api/openapi.yaml` ile **birebir** aynı
-- Sözleşme yanlışsa değiştirme → `solution-architect`'e escalate et
-- Yanıt zarfı tutarlı: `{data, meta}` — endpoint'e göre değişmez
+- Response bodies and status codes match `docs/api/openapi.yaml` **exactly**
+- If the contract is wrong, do not change it — escalate to `solution-architect`
+- The response envelope is consistent: `{data, meta}` — it does not vary per endpoint
 
-## Güvenlik (her endpoint'te)
+## Security (on every endpoint)
 
-- **Varsayılan reddet.** Yetkilendirme her giriş noktasında açıkça yazılır
-- **Kaynak sahipliği kontrolü zorunlu** (IDOR) — "bu kaydı bu kullanıcı görebilir mi"
-- Girdi doğrulama sınırda (şema), iş doğrulaması domain'de
-- Parametreli sorgu — string birleştirme ile SQL **yasak**
-- Hata yanıtında iç detay yok: stack trace, SQL, dosya yolu, sürüm bilgisi sızmaz
-- Log'da gizli veri maskelenir: şifre, token, kart, kimlik, e-posta (kısmi)
-- Dış URL alan her yer allowlist ile korunur (SSRF)
+- **Default deny.** Authorization is written explicitly at every entry point
+- **Resource ownership checks are mandatory** (IDOR) — "can this user see/modify this record"
+- Input validation at the boundary (schema), business validation in the domain
+- Parameterized queries — building SQL by string concatenation is **forbidden**
+- No internal detail in error responses: stack traces, SQL, file paths, version info
+- Secrets masked in logs: passwords, tokens, cards, identity numbers, emails (partial)
+- Anywhere an external URL is accepted is protected by an allowlist (SSRF)
 
-## İşlem (transaction) ve tutarlılık
+## Transactions and consistency
 
-- Bir kullanım senaryosu = bir işlem sınırı
-- İşlem içinde dış çağrı (HTTP, e-posta, kuyruk yayını) **yapma** — sonrasına bırak
-- Yazma işlemleri idempotent olmalı: idempotency key veya doğal anahtar kontrolü
-- Yarış koşulu olan yerlerde iyimser kilitleme (versiyon sütunu) veya DB kısıtı
+- One use case = one transaction boundary
+- **Never** make an external call (HTTP, email, queue publish) inside a transaction —
+  defer it
+- Write operations must be idempotent: idempotency key or natural-key check
+- Where races are possible, use optimistic locking (version column) or a DB constraint
 
-## Hata yönetimi
+## Error handling
 
-- Hata yanıtı RFC 7807 `problem+json`: `{type, title, status, detail, instance, errors[]}`
-- Domain hatası ≠ altyapı hatası. Ayrı tipler, ayrı ele alma
-- `catch` bloğu hatayı **yutmaz** — ya ele alır ya yeniden fırlatır ya loglar
-- Yeniden deneme: sadece geçici hatalarda, üstel geri çekilme, üst sınır ile
+- Error responses follow RFC 7807 `problem+json`: `{type, title, status, detail, instance, errors[]}`
+- Domain errors ≠ infrastructure errors. Separate types, separate handling
+- A `catch` block never swallows an error — it handles, rethrows, or logs
+- Retries: only for transient errors, exponential backoff, with an upper bound
 
-## Performans
+## Performance
 
-- N+1 sorgu yasak — toplu yükleme veya join
-- Sınırsız sonuç kümesi yasak — her liste sayfalanır, varsayılan limit var
-- Pahalı işlem senkron istekte yapılmaz — kuyruğa alınır
-- Dış servis çağrılarında zaman aşımı **zorunlu**
+- No N+1 queries — use batch loading or joins
+- No unbounded result sets — every list is paginated with a default limit
+- Expensive work is not done in a synchronous request — queue it
+- Timeouts are **mandatory** on external service calls
 
-## Veri
+## Data
 
-- Zaman UTC saklanır, sınırda dönüştürülür (`timestamptz`)
-- Para: tam sayı minor-unit veya decimal — `float` **yasak**
-- Şema değişikliği `sql-developer`'ın işi; buradan migration yazma
+- Time is stored in UTC and converted at the boundary (`timestamptz`)
+- Money: integer minor units or decimal — `float` is **forbidden**
+- Schema changes belong to `sql-developer`; do not write migrations here
 
-## Gözlemlenebilirlik
+## Observability
 
-- Yapılandırılmış log (JSON), her satırda korelasyon kimliği
-- Log seviyeleri: ERROR (aksiyon gerekir), WARN (dikkat), INFO (iş olayı), DEBUG (geliştirme)
-- Kritik iş olayları metriklenir
+- Structured logs (JSON) with a correlation id on every line
+- Log levels: ERROR (action required), WARN (attention), INFO (business event), DEBUG (development)
+- Critical business events are emitted as metrics
 
-## Test
+## Tests
 
-- Her `AC-N` için en az bir test, test adında `AC-N` geçsin
-- Her iş kuralı (`BR-N`) için sınır durumu testi: boş, sıfır, negatif, maksimum
-- Her endpoint için uygulanabilir olanlar: 200/201, 400, 401, 403 (başkasının kaynağı),
-  404, 409
-- Integration testler gerçek veritabanına karşı (geçici/izole), mock'a karşı değil
+- At least one test per `AC-N`, with `AC-N` in the test name
+- An edge-case test per business rule (`BR-N`): empty, zero, negative, maximum
+- Per endpoint, whichever apply: 200/201, 400, 401, 403 (another user's resource), 404, 409
+- Integration tests run against a real (ephemeral, isolated) database, not against mocks
 
-## Yasaklar
+## Prohibitions
 
-- Yeni kütüphane eklemek (ADR gerekir)
-- Sabit kodlanmış secret, URL, kimlik bilgisi
-- `catch (e) {}` boş yakalama
-- Sahipsiz `TODO`
-- Yorum satırına alınmış kod
-- İş kuralını iki yerde tekrarlamak
+- Adding a new library (requires an ADR)
+- Hardcoded secrets, URLs or credentials
+- Empty `catch (e) {}`
+- Unowned `TODO`
+- Commented-out code
+- Duplicating a business rule in two places

@@ -1,89 +1,89 @@
 ---
 name: handoff
-description: Bir agent'tan diğerine iş devri paketi üretir. Yapılanı, kalanı, alınan kararları ve tuzakları 200 kelimeyi geçmeyecek şekilde aktarır. Oturum sonu veya rol değişiminde kullanılır.
+description: Produces a work handoff packet from one agent to another. Conveys what was done, what remains, the decisions made and the pitfalls, in no more than 200 words. Used at session end or on a role change.
 ---
 
-# /handoff [devreden] [alan]
+# /handoff [from] [to]
 
-Bağlam kaybını önler ve alan tarafın sıfırdan araştırma yapmasını engeller.
+Prevents context loss and stops the receiving side from re-researching from scratch.
 
-**Ne zaman:** rol değişimi, oturum sonu, dalga geçişi, bloke işi başkasına devretme.
+**When:** role change, end of session, wave transition, handing off blocked work.
 
 ---
 
-## 1. Devir bilgisini topla
+## 1. Gather the handoff information
 
-Mevcut oturumdan veya belirtilen story'den:
-- Ne yapıldı (dosyalar, testler, kararlar)
-- Ne yarım kaldı
-- Hangi kararlar alındı ve neden
-- Hangi tuzaklara düşüldü / hangi varsayımlar yapıldı
-- Alan tarafın çalıştıracağı doğrulama komutu
+From the current session or the specified story:
+- What was done (files, tests, decisions)
+- What was left unfinished
+- Which decisions were made and why
+- Which pitfalls were hit / which assumptions were made
+- The verification command the receiving side should run
 
-## 2. Paketi üret — **200 kelime sınırı**
+## 2. Produce the packet — **200-word limit**
 
 ```markdown
-## Devir Paketi
-**Devreden:** <rol> | **Alan:** <rol> | **İş:** <story-id / konu> | **Tarih:** <tarih>
+## Handoff Packet
+**From:** <role> | **To:** <role> | **Work:** <story-id / topic> | **Date:** <date>
 
-### Yapıldı
-- <madde — somut, dosya/fonksiyon adıyla>
+### Done
+- <item — concrete, with file/function names>
 
-### Kaldı
-- <madde — sonraki somut adım>
+### Remaining
+- <item — the next concrete step>
 
-### Alınan kararlar
-- <karar> — <tek cümle gerekçe>
+### Decisions made
+- <decision> — <one-sentence rationale>
 
-### Dikkat
-- <tuzak, varsayım, sürpriz>
+### Watch out
+- <pitfall, assumption, surprise>
 
-### Dosyalar
-- `<yol>` — <ne yapıldı>
+### Files
+- `<path>` — <what was done>
 
-### Doğrulama
+### Verify
 ```bash
-<alan tarafın çalıştıracağı komut>
+<the command the receiving side should run>
 ```
 ```
 
-**Sınır aşılırsa:** Ayrıntıyı çıkar, sonucu bırak.
-"Şunu denedim olmadı, sonra şunu denedim" → "X yaklaşımı seçildi çünkü Y."
+**If the limit is exceeded:** drop the detail, keep the outcome.
+"I tried X, it failed, then I tried Y" → "Approach X was chosen because Y."
 
-## 3. Nereye yazılır
+## 3. Where it goes
 
-| Durum | Yer |
+| Situation | Location |
 |---|---|
-| Story devri | Story dosyasının sonuna `## Devir Notu` bölümü |
-| Oturum sonu | `docs/CONTEXT.md` → "Şu an ne yapılıyor" |
-| Dalga geçişi | Sonraki dalganın agent prompt'una gömülür (dosyaya yazılmaz) |
-| Bloke devri | `product/sprints/sprint-NN.md` → not olarak |
+| Story handoff | A `## Handoff note` section at the end of the story file |
+| End of session | `docs/CONTEXT.md` → "Current work" |
+| Wave transition | Embedded in the next wave's agent prompt (not written to a file) |
+| Blocked handoff | `product/sprints/sprint-NN.md` → as a note |
 
-## 4. Alan taraf için başlangıç
+## 4. Starting point for the receiving side
 
-Devir paketi, alan agent'ın prompt'una **story ile birlikte** gömülür:
+The handoff packet is embedded in the receiving agent's prompt **together with the story**:
 
 ```
-<STORY DOSYASI>
+<THE STORY FILE>
 
-ÖNCEKİ ÇALIŞANDAN DEVİR:
-<devir paketi>
+HANDOFF FROM THE PREVIOUS WORKER:
+<the handoff packet>
 
-Görev: Kaldığı yerden devam et. Devir paketindeki kararları SORGULAMA —
-uygulanmış kararlardır. Sadece "Kaldı" bölümündeki işi yap.
+Task: continue from where it was left. Do NOT question the decisions in the handoff
+packet — they are already implemented. Only do the work under "Remaining".
 ```
 
 ---
 
-## Kural
+## Rule
 
-Devir paketi **yorum içermez**, sadece durum aktarır.
-"Şunu daha iyi yapabilirdim" gibi ifadeler yazılmaz — o retro'nun işi.
+A handoff packet **contains no commentary**, only state.
+Phrases like "I could have done this better" are not written — that is the retro's job.
 
 ---
 
-## Token notu
+## Token note
 
-- **0 agent çağrısı** — mevcut bağlamdan üretilir.
-- 200 kelime sınırı kasıtlı: uzun devir notu, alan tarafın okuma maliyetidir.
-- İyi bir devir paketi, alan agent'ın 5-8 dosya taramasını önler.
+- **0 agent calls** — produced from the current context.
+- The 200-word limit is deliberate: a long handoff note is a reading cost for the receiver.
+- A good handoff packet saves the receiving agent from scanning 5-8 files.

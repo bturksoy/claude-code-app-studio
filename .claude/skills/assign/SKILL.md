@@ -1,99 +1,99 @@
 ---
 name: assign
-description: Bir story'yi doğru agent'a yönlendirir. Hazırlık kontrolü yapar, eksik bağlamı tespit eder ve gerekirse story'yi tamamlar. /dev-task öncesi hazırlık adımı.
+description: Routes a story to the right agent. Runs a readiness check, detects missing context and completes the story if needed. A preparation step before /dev-task.
 ---
 
-# /assign <story-yolu>
+# /assign <story-path>
 
-Sahip: `delivery-manager`. Agent çağırmadan çalışır (story eksikse hariç).
+Owner: `delivery-manager`. Runs without invoking agents (unless the story is incomplete).
 
 ---
 
-## 1. Story'yi oku ve sahip belirle
+## 1. Read the story and determine the owner
 
-`Sahip` alanı doluysa onu kullan. Boşsa tipten ve içerikten türet:
+If the `Owner` field is filled, use it. If empty, derive it from the type and content:
 
-| Sinyal | Sahip |
+| Signal | Owner |
 |---|---|
-| Ekran, komponent, form, rota, CSS | `frontend-developer` |
-| Endpoint, servis, iş kuralı, entegrasyon | `backend-developer` |
-| Tablo, migration, index, sorgu | `sql-developer` |
-| Pipeline, ortam, IaC, izleme, deploy | `devops-engineer` |
-| ETL, rapor, event şeması | `data-engineer` |
-| Test senaryosu, otomasyon, regresyon | `test-engineer` |
-| Ekran akışı, IA, wireframe | `ux-designer` |
-| Token, komponent spesifikasyonu | `ui-designer` |
+| Screen, component, form, route, CSS | `frontend-developer` |
+| Endpoint, service, business rule, integration | `backend-developer` |
+| Table, migration, index, query | `sql-developer` |
+| Pipeline, environment, IaC, monitoring, deploy | `devops-engineer` |
+| ETL, report, event schema | `data-engineer` |
+| Test case, automation, regression | `test-engineer` |
+| Screen flow, IA, wireframe | `ux-designer` |
+| Token, component spec | `ui-designer` |
 
-**Birden fazla sinyal varsa story bölünmelidir** — bunu raporla:
+**If more than one signal is present, the story must be split** — report this:
 ```
-⚠ story-007 hem backend hem frontend işi içeriyor.
-   Öneri: iki story'ye böl → /stories <epic> tekrar çalıştır
-   veya: sözleşme sınırından böl (BE önce, FE sonra)
-```
-
-## 2. Hazırlık kontrolü
-
-```
-[ ] Durum "Hazır" mı (Bloke değil)
-[ ] Bağımlı story'ler DONE mı
-[ ] Kabul kriterleri Given/When/Then formatında mı
-[ ] "Uygulanacak mimari kararlar" dolu mu (veya gerekçeli N/A)
-[ ] "Sözleşme" bölümü dolu mu (API/veri gerektiren tipler için)
-[ ] "Dokunulacak dosyalar" listesi var mı
-[ ] "Test senaryoları" dolu mu (Logic/Integration için)
-[ ] "Kapsam DIŞI" bölümü dolu mu
+⚠ story-007 contains both backend and frontend work.
+   Suggestion: split into two stories → re-run /stories <epic>
+   or: split at the contract boundary (BE first, FE second)
 ```
 
-## 3. Eksikleri tamamla
+## 2. Readiness check
 
-Eksik varsa **kaynağı bul ve story'ye kopyala** (agent çağırmadan):
+```
+[ ] Is the status "Ready" (not Blocked)
+[ ] Are the stories it depends on DONE
+[ ] Are the acceptance criteria in Given/When/Then form
+[ ] Is "Architecture decisions to apply" filled in (or a justified N/A)
+[ ] Is the "Contract" section filled in (for types that need API/data)
+[ ] Is there a "Files to touch" list
+[ ] Is "Test scenarios" filled in (for Logic/Integration)
+[ ] Is the "Out of scope" section filled in
+```
 
-| Eksik | Kaynak |
+## 3. Fill the gaps
+
+If something is missing, **find the source and copy it into the story** (no agent needed):
+
+| Missing | Source |
 |---|---|
-| Kabul kriterleri | `FRD.md` → ilgili REQ |
-| ADR uygulama rehberi | `adr/ADR-NNNN-*.md` → "Uygulama rehberi" bölümü |
-| Sözleşme | `openapi.yaml` ilgili endpoint / `ER.md` ilgili tablo |
-| Dokunulacak dosyalar | Grep ile ilgili modülde tespit et |
-| Test senaryoları | Yoksa `qa-lead` çağır (tek eksik bu ise) |
+| Acceptance criteria | `FRD.md` → the relevant REQ |
+| ADR implementation guidance | `adr/ADR-NNNN-*.md` → the "Implementation guidance" section |
+| Contract | The relevant endpoint in `openapi.yaml` / the relevant table in `ER.md` |
+| Files to touch | Identify them via Grep in the relevant module |
+| Test scenarios | If missing, invoke `qa-lead` (only if this is the sole gap) |
 
-Bu adım **görev paketini tamamlar** ve `/dev-task`'ın maliyetini düşürür.
+This step **completes the task packet** and lowers the cost of `/dev-task`.
 
-## 4. Sun
-
-```
-## Görev Ataması
-
-Story <NNN>: <başlık>
-Sahip: <agent>   Tip: <tip>   Tahmin: <boyut>
-
-Hazırlık: <a>/<b> ✓
-Tamamlanan eksikler:
-  ✓ Sözleşme eklendi (openapi.yaml → POST /orders)
-  ✓ ADR-0007 uygulama rehberi kopyalandı
-  ✓ Dokunulacak dosyalar tespit edildi (<n> dosya)
-
-Kalan eksik: <varsa>
-
-Bağımlılıklar: <durum>
-
-▶ Hazır: /dev-task <yol>
-```
-
-## 5. Bloke ise
+## 4. Present
 
 ```
-⚠ Story bloke: <neden>
-   Bağımlı: story-003 (durum: Devam ediyor)
+## Task Assignment
 
-   Şu an yapılabilecekler:
-     /dev-task <bağımsız story yolu>
+Story <NNN>: <title>
+Owner: <agent>   Type: <type>   Estimate: <size>
+
+Readiness: <a>/<b> ✓
+Gaps filled:
+  ✓ Contract added (openapi.yaml → POST /orders)
+  ✓ ADR-0007 implementation guidance copied
+  ✓ Files to touch identified (<n> files)
+
+Remaining gaps: <if any>
+
+Dependencies: <status>
+
+▶ Ready: /dev-task <path>
+```
+
+## 5. If blocked
+
+```
+⚠ Story blocked: <reason>
+   Depends on: story-003 (status: In progress)
+
+   What you can do now:
+     /dev-task <path to an independent story>
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **Genellikle 0 agent çağrısı** — sadece dosya okuma ve kopyalama.
-- Bu skill `/dev-task`'ın maliyetini düşürmek için vardır: eksik görev paketi
-  = geliştirici agent'ın arama yapması = 3-5 kat maliyet.
-- Sprint başında tüm story'ler için toplu çalıştırılabilir.
+- **Usually 0 agent calls** — just file reads and copying.
+- This skill exists to lower the cost of `/dev-task`: an incomplete task packet means the
+  developer agent has to search, which costs 3-5× more.
+- Can be run in bulk for every story at the start of a sprint.

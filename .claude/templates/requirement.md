@@ -1,46 +1,46 @@
-### REQ-<ALAN>-<NNN>: <başlık>
+### REQ-<AREA>-<NNN>: <title>
 
-**Kaynak:** GOAL-<NN> / PRD §<bölüm> / FEAT-<NN>
-**Öncelik:** Zorunlu | Yüksek | Orta | Düşük
-**Aktör:** <rol>
-**Tetikleyici:** <ne başlatır>
+**Source:** GOAL-<NN> / PRD §<section> / FEAT-<NN>
+**Priority:** Must | High | Medium | Low
+**Actor:** <role>
+**Trigger:** <what starts it>
 
-**Davranış**
+**Behaviour**
 
-<Sistemin ne yapacağı. Tek paragraf, belirsizlik yok.
-"Bu tanımla iki farklı sistem yazılabilir mi?" testinden geçmeli.>
+<What the system does. One paragraph, no ambiguity.
+It must pass the test: "could two different systems be built from this definition?">
 
-**İş kuralları**
+**Business rules**
 
-- **BR-1:** <kural>
-- **BR-2:** <kural>
+- **BR-1:** <rule>
+- **BR-2:** <rule>
 
-**Kabul kriterleri**
+**Acceptance criteria**
 
-- **AC-1:** <kriter>
-  - Given: <önkoşul>
-  - When: <eylem>
-  - Then: <gözlemlenebilir, ölçülebilir sonuç>
-- **AC-2:** <kriter>
+- **AC-1:** <criterion>
+  - Given: <precondition>
+  - When: <action>
+  - Then: <observable, measurable result>
+- **AC-2:** <criterion>
   - Given: <...>
   - When: <...>
   - Then: <...>
 
-**Hata ve sınır durumları**
+**Errors and edge cases**
 
-*En az 2 senaryo zorunlu. Sadece mutlu yol yazılmaz.*
+*At least 2 scenarios are mandatory. Never write the happy path alone.*
 
-| Durum | Beklenen davranış | Kullanıcıya mesaj |
+| Case | Expected behaviour | Message to user |
 |---|---|---|
-| <boş girdi> | | |
-| <yetkisiz erişim> | | |
-| <eşzamanlı işlem> | | |
+| <empty input> | | |
+| <unauthorized access> | | |
+| <concurrent operation> | | |
 
-**Yetki**
+**Authorization**
 
-| Rol | Yapabilir | Yapamaz |
+| Role | Can | Cannot |
 |---|---|---|
 
-**Bağımlılıklar:** <REQ-* / dış sistem / Yok>
-**Varsayımlar:** <varsa>
-**Açık sorular:** <soru — sahip — bloke edici mi>
+**Dependencies:** <REQ-* / external system / None>
+**Assumptions:** <if any>
+**Open questions:** <question — owner — blocking?>

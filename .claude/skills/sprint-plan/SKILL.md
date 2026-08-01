@@ -1,143 +1,144 @@
 ---
 name: sprint-plan
-description: Sprint hedefini belirler, story'leri agent'lara dağıtır, bağımlılıkları sıralar, paralel çalışma bantlarını kurar ve riskleri işaretler. Görev dağılımının yapıldığı yer. DM-PLAN kapısını işletir.
+description: Sets the sprint goal, assigns stories to agents, orders dependencies, sets up parallel work lanes and flags risks. Where task assignment happens. Operates the DM-PLAN gate.
 ---
 
 # /sprint-plan [new | status]
 
-Sahip: `delivery-manager`. Çıktı: `product/sprints/sprint-NN.md`
+Owner: `delivery-manager`. Output: `product/sprints/sprint-NN.md`
 
 ---
 
-## 1. Girdi
+## 1. Input
 
-- `product/backlog/index.md` — epic durumları
-- Hazır story'lerin **başlık tablosu** (Glob + her story'den ilk 8 satır —
-  tam story dosyalarını okuma)
-- `product/roadmap/ROADMAP.md` — mevcut faz hedefi
+- `product/backlog/index.md` — epic statuses
+- The **heading table** of ready stories (Glob + the first 8 lines of each story —
+  do not read full story files)
+- `product/roadmap/ROADMAP.md` — the current phase goal
 - `product/risks.md`
-- `.state/project.json` — aktif roller, son sprint numarası
+- `.state/project.json` — active roles, last sprint number
 
-## 2. Kullanıcıdan sprint parametreleri
+## 2. Sprint parameters from the user
 
 `AskUserQuestion`:
-- **Sprint uzunluğu:** `1 hafta` / `2 hafta (Önerilen)` / `Süre yok — story bazlı ilerle`
-- **Bu sprintte odak:** `Yürüyen iskelet` / `<epic adı>` / `Karışık — en öncelikli story'ler`
+- **Sprint length:** `1 week` / `2 weeks (Recommended)` / `No timebox — proceed story by story`
+- **Focus this sprint:** `Walking skeleton` / `<epic name>` / `Mixed — highest-priority stories`
 
-## 3. `delivery-manager` çağır
-
-```
-Faz: <ad> — <hipotez ve çıkış kriteri>
-Aktif roller: <liste>
-Sprint uzunluğu: <cevap> | Odak: <cevap>
-Son sprint: <NN> — <varsa devreden story'ler>
-
-Hazır story'ler:
-| # | Epic | Başlık | Tip | Sahip | Tahmin | Bağımlı | Dokunduğu modüller |
-
-Açık riskler: <risks.md özeti>
-
-Görev: Sprint <NN+1> planı üret.
-
-1. Sprint hedefi — TEK cümle, kullanıcı değeri içermeli
-   ("<N> story bitirmek" bir hedef değildir)
-2. Story seçimi: kapasiteye sığan, bağımlılığı çözülmüş, hedefe hizmet edenler
-3. Görev dağılımı tablosu: | # | Story | Tip | Sahip | Tahmin | Bağımlı | Gün | Durum |
-4. Kritik yol: sıralı zincir — biri gecikirse sprint gecikir
-5. Paralel bantlar: hangi işler aynı anda yürüyebilir
-   Bant formatı: "Bant A (sözleşme) → Bant B (veri+servis) ‖ Bant C (arayüz)"
-   Entegrasyon noktasını belirt (sprint ortası, sonu değil)
-6. Riskler: | Risk | Olasılık | Etki | Sahip | Erken uyarı | Önlem |
-7. Sprint dışı bırakılanlar ve neden
-
-ZORUNLU KURALLAR (ihlal varsa planı düzelt):
-- Bir story = bir sahip
-- Aynı dosyaya/modüle iki agent aynı sprintte yazamaz → sıraya koy
-- Sözleşme üreten iş (API/şema) tüketenden ÖNCEKİ gün biter
-- Kapasitenin %20'si tampon (hata + plansız iş)
-- Bağımlılık zinciri 3'ten uzun olamaz
-- Bloke story'ler sprinte alınmaz
-
-Yanıtına "DM-PLAN: ONAY|ŞARTLI|RET" satırıyla başla (kendi planını denetle).
-```
-
-## 4. Çakışma denetimi (sen yaparsın)
-
-Plan geldiğinde şunu kontrol et:
-- Aynı `Dokunduğu modüller` değerine sahip iki story aynı bantta mı → uyar
-- Bağımlı story sahibi, bağımlı olunan story'nin sahibiyle aynı mı → darboğaz uyarısı
-- Toplam tahmin kapasiteyi aşıyor mu
-
-## 5. Sun
+## 3. Invoke `delivery-manager`
 
 ```
-## Sprint <NN> — <tarih aralığı>
-Hedef: <tek cümle>
+Phase: <name> — <hypothesis and exit criterion>
+Active roles: <list>
+Sprint length: <answer> | Focus: <answer>
+Last sprint: <NN> — <any carried-over stories>
 
-Görev dağılımı
-| # | Story | Sahip | Tahmin | Gün | Bağımlı |
+Ready stories:
+| # | Epic | Title | Type | Owner | Estimate | Depends on | Modules touched |
 
-Paralel bantlar
-  Bant A (sözleşme) : story-003 → sql-developer         [Gün 1]
-  Bant B (servis)   : story-004, story-005 → backend    [Gün 2-4]
-  Bant C (arayüz)   : story-006 → frontend (mock ile)   [Gün 2-4]
-  Entegrasyon       : Gün 4
-  Bant D (test)     : story-007 → test-engineer         [Gün 5]
+Open risks: <summary from risks.md>
 
-Kritik yol: story-003 → story-004 → story-006
-Kapasite: <kullanılan>/<toplam> (tampon %<n>)
-Riskler: <en büyük 3>
-Sprint dışı: <liste>
+Task: produce the plan for sprint <NN+1>.
 
-Kapı: DM-PLAN <verdikt>
-⚠ Çakışma uyarısı: <varsa>
+1. Sprint goal — ONE sentence, must contain user value
+   ("Finish N stories" is not a goal)
+2. Story selection: what fits capacity, has dependencies resolved, and serves the goal
+3. Assignment table: | # | Story | Type | Owner | Estimate | Depends on | Day | Status |
+4. Critical path: the ordered chain — if one slips, the sprint slips
+5. Parallel lanes: which work can run concurrently
+   Lane format: "Lane A (contract) → Lane B (data+service) ‖ Lane C (interface)"
+   State the integration point (mid-sprint, not the end)
+6. Risks: | Risk | Probability | Impact | Owner | Early warning | Mitigation |
+7. What was left out and why
+
+MANDATORY RULES (fix the plan if any is violated):
+- One story = one owner
+- Two agents cannot write to the same file/module in one sprint → sequence them
+- Contract-producing work (API/schema) finishes the DAY BEFORE consuming work
+- 20% of capacity is buffer (bugs + unplanned work)
+- A dependency chain may not exceed 3
+- Blocked stories are not pulled into the sprint
+
+Begin your reply with "DM-PLAN: APPROVED|CONDITIONAL|REJECTED" (review your own plan).
 ```
 
-`AskUserQuestion`: `Planı onayla (Önerilen)` / `Kapsamı daraltacağım` /
-`Sahip atamalarını değiştireceğim`
+## 4. Conflict audit (you do this)
 
-## 6. Yaz
+When the plan arrives, check:
+- Are two stories with the same `Modules touched` value in the same lane → warn
+- Is the owner of a dependent story the same as the owner of the story it depends on →
+  bottleneck warning
+- Does the total estimate exceed capacity
+
+## 5. Present
+
+```
+## Sprint <NN> — <date range>
+Goal: <one sentence>
+
+Assignments
+| # | Story | Owner | Estimate | Day | Depends on |
+
+Parallel lanes
+  Lane A (contract) : story-003 → sql-developer         [Day 1]
+  Lane B (service)  : story-004, story-005 → backend    [Day 2-4]
+  Lane C (interface): story-006 → frontend (mocks)      [Day 2-4]
+  Integration       : Day 4
+  Lane D (testing)  : story-007 → test-engineer         [Day 5]
+
+Critical path: story-003 → story-004 → story-006
+Capacity: <used>/<total> (buffer <n>%)
+Risks: <top 3>
+Left out: <list>
+
+Gate: DM-PLAN <verdict>
+⚠ Conflict warning: <if any>
+```
+
+`AskUserQuestion`: `Approve the plan (Recommended)` / `I want to narrow the scope` /
+`I want to change the owner assignments`
+
+## 6. Write
 
 - `product/sprints/sprint-NN.md`
-- `product/sprints/index.md` satırı
-- Her seçilen story dosyasının başlığındaki `**Sprint:**` alanını güncelle
+- A row in `product/sprints/index.md`
+- Update the `**Sprint:**` field in the header of each selected story file
 - `.state/project.json` → `currentSprint`, `phase: "build"`
-- `docs/CONTEXT.md` → "Şu an ne yapılıyor" bölümü
+- `docs/CONTEXT.md` → the "Current work" section
 - `.state/gates.jsonl` → DM-PLAN
 
-## 7. Kapat
+## 7. Close
 
 ```
-✓ Sprint <NN> planlandı — <N> story, <M> rol
+✓ Sprint <NN> planned — <N> stories, <M> roles
 
-▶ Sonraki: /dev-task <ilk-story-yolu>
-   Kritik yoldaki ilk story: <ad> (<sahip>)
+▶ Next: /dev-task <first-story-path>
+   First story on the critical path: <name> (<owner>)
 
-   Alternatif: /team-feature <epic>  — tüm bandı koordineli yürütür
+   Alternative: /team-feature <epic>  — runs the whole lane in a coordinated way
 ```
 
 ---
 
-## `/sprint-plan status` modu
+## `/sprint-plan status` mode
 
-Argüman `status` ise yeni plan yapma; mevcut sprintin durumunu göster:
+If the argument is `status`, do not plan a new sprint; show the current sprint's state:
 
 ```
-## Sprint <NN> — Gün <X>/<Y>
-| Story | Sahip | Durum | Not |
-Tamamlanan: <a>/<b> | Bloke: <c>
-Kritik yol durumu: <yolunda | risk altında | gecikti>
-Kalan kapasite: <...>
-▶ Şimdi yapılacak: <story>
+## Sprint <NN> — Day <X>/<Y>
+| Story | Owner | Status | Note |
+Completed: <a>/<b> | Blocked: <c>
+Critical path: <on track | at risk | slipped>
+Remaining capacity: <...>
+▶ Do now: <story>
 ```
 
-Bu mod **agent çağırmaz** — sadece dosya okur.
+This mode **invokes no agents** — it only reads files.
 
 ---
 
-## Token notu
+## Token note
 
-- **1 agent çağrısı.**
-- Story dosyalarının **tamamını okuma** — başlık bloğu (ilk 8 satır) yeter.
-- `status` modu tamamen bedava (dosya okuma).
-- Çakışma denetimini model yapar.
+- **1 agent call.**
+- Do **not** read story files in full — the header block (first 8 lines) is enough.
+- `status` mode is entirely free (file reads only).
+- The conflict audit is done by the model.

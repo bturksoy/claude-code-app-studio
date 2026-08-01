@@ -1,56 +1,56 @@
-# BUG-<NNN>: <tek cümle — gözlenen davranış, yorum değil>
+# BUG-<NNN>: <one sentence — the observed behaviour, not an interpretation>
 
-**Öncelik:** P0 | P1 | P2 | P3
-**Durum:** Açık | Doğrulandı | Düzeltiliyor | Düzeltildi | Kapandı
-**Bulunduğu ortam:** <local | test | staging | prod>
-**Sürüm/build:** <...>
-**İlgili:** REQ-<ID> / story-<NNN>
-**Sahip:** <agent>
-**Tarih:** <YYYY-MM-DD>
+**Priority:** P0 | P1 | P2 | P3
+**Status:** Open | Confirmed | In progress | Fixed | Closed
+**Found in:** <local | test | staging | prod>
+**Version/build:** <...>
+**Related:** REQ-<ID> / story-<NNN>
+**Owner:** <agent>
+**Date:** <YYYY-MM-DD>
 
-## Yeniden üretme adımları
+## Steps to reproduce
 
-1. <önkoşul: hangi kullanıcı, hangi veri>
-2. <adım>
-3. <adım>
+1. <precondition: which user, which data>
+2. <step>
+3. <step>
 
-**Sıklık:** Her seferinde | Bazen (<n>/10) | Bir kez görüldü
+**Frequency:** Every time | Sometimes (<n>/10) | Seen once
 
-## Beklenen
+## Expected
 
-<Ne olmalıydı — kaynak: REQ-<ID> AC-<N>>
+<What should have happened — source: REQ-<ID> AC-<N>>
 
-## Gözlenen
+## Observed
 
-<Ne oldu>
+<What happened>
 
-## Kanıt
+## Evidence
 
 ```
-<log satırı, hata mesajı, test çıktısı>
+<log line, error message, test output>
 ```
 
-## Kapsam ve etki
+## Scope and impact
 
-- **Etkilenen kullanıcı/senaryo:** <...>
-- **Veri bozulması var mı:** <evet/hayır>
-- **Geçici çözüm:** <var — nasıl | yok>
+- **Users/scenarios affected:** <...>
+- **Data corruption:** <yes/no>
+- **Workaround:** <exists — how | none>
 
-## Kök neden
+## Root cause
 
-<Doğrulandıktan sonra doldurulur>
+<Filled in after confirmation>
 
-## Düzeltme
+## Fix
 
-<Ne değişti, hangi dosyalar>
+<What changed, which files>
 
-## Regresyon testi
+## Regression test
 
-**Dosya:** `tests/<yol>/<slug>.test.<ext>`
-**Ne assert ediyor:** <...>
-**Durum:** [ ] Yazıldı ve önce başarısız oldu, sonra geçti
+**File:** `tests/<path>/<slug>.test.<ext>`
+**What it asserts:** <...>
+**Status:** [ ] Written, failed first, then passed
 
-## Önleme
+## Prevention
 
-<Bu sınıf hata neden yakalanmadı — test/inceleme/izleme boşluğu.
-Takip story'si açıldı mı?>
+<Why this class of bug was not caught — a test, review or monitoring gap.
+Was a follow-up story created?>

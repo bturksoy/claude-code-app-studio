@@ -1,109 +1,110 @@
 ---
 name: prd
-description: Ürün Gereksinim Dokümanını (PRD) üretir. Keşif çıktısını yapılandırılmış, önceliklendirilmiş ve ölçülebilir bir ürün tanımına dönüştürür. PO-SCOPE kapısını işletir.
+description: Produces the Product Requirements Document (PRD). Turns the discovery output into a structured, prioritized and measurable product definition. Operates the PO-SCOPE gate.
 ---
 
 # /prd
 
-Sahip: `product-owner`. Çıktı: `product/prd/PRD.md`.
+Owner: `product-owner`. Output: `product/prd/PRD.md`.
 
-Ön koşul: `product/discovery.md` (yoksa `/discovery` öner ve dur).
-Bloke edici açık soru varsa önce onları çöz.
+Prerequisite: `product/discovery.md` (if missing, suggest `/discovery` and stop).
+If there are blocking open questions, resolve them first.
 
 ---
 
-## 1. Girdi hazırla
+## 1. Prepare the input
 
-`product/00-brief.md` + `product/discovery.md` oku. Bağlam bloğu (≤ 60 satır):
-hedefler, personalar, yetenek listesi (MoSCoW), alınan kararlar, kapsam dışı.
+Read `product/00-brief.md` + `product/discovery.md`. Context block (≤ 60 lines):
+goals, personas, capability list (MoSCoW), decisions made, out of scope.
 
-## 2. `product-owner` çağır
+## 2. Invoke `product-owner`
 
 ```
-<BAĞLAM BLOĞU>
+<CONTEXT BLOCK>
 
-Görev: PRD üret. Bölümler:
+Task: produce the PRD. Sections:
 
-1. Özet — 3 cümle: ne, kim için, neden şimdi
-2. Hedefler ve metrikler — GOAL tablosu, her birine ürün içi ölçüm olayı bağla
-3. Personalar — keşiften, kısaltılmış
-4. Kapsam
-   4.1 Yetenekler: her biri FEAT-NN kimliği alır
-       | ID | Yetenek | Kullanıcı değeri | Öncelik | GOAL | Faz |
-   4.2 Kullanıcı yolculukları: her persona için uçtan uca 1 senaryo
-   4.3 Kapsam dışı: madde + neden + ne zaman tekrar bakılacak
-5. Varsayımlar ve bağımlılıklar
-6. Kısıtlar (teknik, yasal, ticari, takvim)
-7. Riskler — olasılık/etki/önlem
-8. Açık sorular — sahip ve bloke edici mi
+1. Summary — 3 sentences: what, for whom, why now
+2. Goals and metrics — GOAL table, each bound to an in-product measurement event
+3. Personas — from discovery, condensed
+4. Scope
+   4.1 Capabilities: each gets a FEAT-NN id
+       | ID | Capability | User value | Priority | GOAL | Phase |
+   4.2 User journeys: one end-to-end scenario per persona
+   4.3 Out of scope: item + why + when it will be revisited
+5. Assumptions and dependencies
+6. Constraints (technical, legal, commercial, schedule)
+7. Risks — probability/impact/mitigation
+8. Open questions — owner and whether blocking
 
-Kurallar:
-- Her "Olmalı" yeteneği bir GOAL'a bağlı olmalı. Bağlanamıyorsa öncelik düşür.
-- Teknik çözüm yazma (hangi veritabanı, hangi framework) — bu mimarinin işi.
-- Ekran tasarlama — bu UX'in işi.
-- Her yeteneği tek cümlede kullanıcı değeriyle ifade et.
-- Fazlandırma taslağı ver ama detayı /roadmap'e bırak.
+Rules:
+- Every "Must" capability must map to a GOAL. If it cannot, lower its priority.
+- Do not write technical solutions (which database, which framework) — that is architecture's job.
+- Do not design screens — that is UX's job.
+- Express each capability in one sentence of user value.
+- Give a draft phasing but leave the detail to /roadmap.
 
-Sonra yanıtına "PO-SCOPE: ONAY|ŞARTLI|RET" satırıyla başla ve şunu değerlendir:
-- MVP kapsamı tek ekibin makul sürede bitirebileceği büyüklükte mi?
-- "Olmayacak" listesi dolu mu?
-- Metrikler ölçülebilir mi?
-- En riskli varsayım ilk fazda test ediliyor mu?
+Then begin your reply with "PO-SCOPE: APPROVED|CONDITIONAL|REJECTED" and evaluate:
+- Is the MVP scope something one team can finish in a reasonable time?
+- Is the "Won't" list populated?
+- Are the metrics measurable?
+- Is the riskiest assumption tested in the first phase?
 ```
 
-## 3. Kapı işleme
+## 3. Handle the gate
 
-`product/review-mode.txt` oku:
-- `solo` → PO-SCOPE atla, not düş
-- `lean` / `full` → verdikti işle
+Read `product/review-mode.txt`:
+- `solo` → skip PO-SCOPE, note it
+- `lean` / `full` → process the verdict
 
-| Verdikt | Aksiyon |
+| Verdict | Action |
 |---|---|
-| `ONAY` | Devam |
-| `ŞARTLI` | Maddeleri kullanıcıya göster, düzeltmeleri PRD'ye işle, kapıyı **tekrar çağırma** |
-| `RET` | Kullanıcıya nedeni göster, `/discovery` veya kapsam daraltma öner, dur |
+| `APPROVED` | Continue |
+| `CONDITIONAL` | Show the items to the user, fold the fixes into the PRD, **do not re-invoke the gate** |
+| `REJECTED` | Show the user why, suggest `/discovery` or narrowing scope, stop |
 
-## 4. Sun ve onay al
+## 4. Present and get approval
 
-Ekrana **özet** ver (tam PRD'yi basma):
+Print a **summary** on screen (never the full PRD):
 
 ```
-## PRD Özeti
-Yetenekler: <N> (Olmalı: <a>, Olmalıydı: <b>, Olabilir: <c>, Olmayacak: <d>)
+## PRD Summary
+Capabilities: <N> (Must: <a>, Should: <b>, Could: <c>, Won't: <d>)
 
-MVP (Faz 1)
-  FEAT-01 <ad> → GOAL-01
+MVP (Phase 1)
+  FEAT-01 <name> → GOAL-01
   ...
 
-Sonraki fazlara ertelenen: <N> yetenek
-Açık soru: <N> (<B> bloke edici)
-Kapı: PO-SCOPE <verdikt>
+Deferred to later phases: <N> capabilities
+Open questions: <N> (<B> blocking)
+Gate: PO-SCOPE <verdict>
 ```
 
-`AskUserQuestion`: `PRD'yi yaz (Önerilen)` / `Kapsamı daraltacağım` / `Yetenek ekleyeceğim`
+`AskUserQuestion`: `Write the PRD (Recommended)` / `I want to narrow the scope` /
+`I want to add a capability`
 
-## 5. Yaz ve güncelle
+## 5. Write and update
 
 - `product/prd/PRD.md`
-- `docs/CONTEXT.md` → "Ne inşa ediyoruz" bölümünü PRD özetiyle güncelle
-- `.state/project.json` → `phase: "discovery"` kalır, `counters` güncellenmez
-- `.state/gates.jsonl` → PO-SCOPE satırı ekle
-- Açık sorular `product/discovery.md`'deki tabloya senkronlanır (tek yerde yaşasın)
+- `docs/CONTEXT.md` → update "What we are building" from the PRD summary
+- `.state/project.json` → `phase` stays `discovery`, counters unchanged
+- `.state/gates.jsonl` → append the PO-SCOPE line
+- Open questions are synced into the table in `product/discovery.md` (one home only)
 
-## 6. Kapat
+## 6. Close
 
 ```
-✓ PRD yazıldı → product/prd/PRD.md
-  <N> yetenek | MVP: <M> yetenek | Kapı: PO-SCOPE <verdikt>
+✓ PRD written → product/prd/PRD.md
+  <N> capabilities | MVP: <M> capabilities | Gate: PO-SCOPE <verdict>
 
-▶ Sonraki: /requirements
-   Business Analyst her yeteneği test edilebilir gereksinime çevirecek.
+▶ Next: /requirements
+   The Business Analyst will turn each capability into testable requirements.
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **1 agent çağrısı.** PO hem PRD'yi yazar hem kapıyı verir (ayrı çağrı yapma).
-- Bağlam bloğu ≤ 60 satır; discovery.md'nin tamamını gömme.
-- PRD'yi ekrana basma — dosyaya yaz, özet göster.
+- **1 agent call.** The PO both writes the PRD and issues the gate verdict — do not split them.
+- Context block ≤ 60 lines; do not embed all of discovery.md.
+- Never print the PRD on screen — write the file, show the summary.

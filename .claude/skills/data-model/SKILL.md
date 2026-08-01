@@ -1,110 +1,111 @@
 ---
 name: data-model
-description: Veri modelini tasarlar — ER diyagramı, tablo şeması, kısıtlar, index'ler ve migration planı. Veri sözlüğünü kanonik kaynak alır. db/schema.sql ve docs/data/ER.md üretir.
+description: Designs the data model — ER diagram, table schema, constraints, indexes and migration plan. Treats the data dictionary as the canonical source. Produces db/schema.sql and docs/data/ER.md.
 ---
 
-# /data-model [kapsam]
+# /data-model [scope]
 
-Sahip: `sql-developer`, danışan: `solution-architect`.
-Çıktı: `docs/data/ER.md`, `db/schema.sql`, `db/migrations/NNNN_*.sql`
+Owner: `sql-developer`, consulted: `solution-architect`.
+Outputs: `docs/data/ER.md`, `db/schema.sql`, `db/migrations/NNNN_*.sql`
 
 ---
 
-## 1. Girdi
+## 1. Input
 
-- `product/requirements/data-dictionary.md` — **kanonik terim kaynağı**
-- İlgili REQ'lerin veri ile ilgili kısımları
-- `docs/architecture/ARCHITECTURE.md` — veritabanı seçimi, işlem sınırları
-- Mevcut `db/schema.sql` ve son migration numarası
+- `product/requirements/data-dictionary.md` — **the canonical term source**
+- The data-related parts of the relevant REQs
+- `docs/architecture/ARCHITECTURE.md` — database choice, transaction boundaries
+- The existing `db/schema.sql` and the last migration number
 
-## 2. `sql-developer` çağır
-
-```
-Veritabanı: <seçim + sürüm>
-Veri sözlüğü: <terim tablosu — tam>
-İlgili gereksinimler: <REQ ID + veri ile ilgili davranış özeti>
-Mevcut şema: <tablo + sütun listesi, DDL değil>
-Son migration: <numara>
-İşlem sınırları: <mimariden>
-
-Görev: Veri modelini üret.
-
-1. ER diyagramı (Mermaid erDiagram) — ilişki kardinaliteleri doğru
-2. Her tablo için:
-   - Amaç (tek cümle)
-   - Sütunlar: ad, tip, null, varsayılan, açıklama
-   - Birincil anahtar, yabancı anahtarlar (ON DELETE davranışıyla)
-   - Benzersizlik kısıtları (iş anahtarları)
-   - CHECK kısıtları (iş kurallarının veritabanı karşılığı)
-   - Silme stratejisi: hard / soft (deleted_at) / arşiv
-3. Index'ler — her biri için hangi sorguyu hızlandırdığı YAZILI
-4. Migration dosyaları: NNNN_<ad>.sql, her biri -- +up / -- +down bölümlü
-5. Tam schema.sql (migration sonrası hedef durum)
-6. Denormalizasyon yaptıysan gerekçe + ADR gerekiyor mu
-
-Zorunlu kurallar:
-- İsimlendirme: tablo çoğul snake_case, FK <tekil>_id, index ix_/uq_/ck_/fk_
-- created_at, updated_at her tabloda timestamptz (UTC)
-- Para: numeric veya minor-unit bigint — float YASAK
-- Kısıt > uygulama kodu: veritabanı bozuk veri kabul etmemeli
-- Veri sözlüğündeki terimleri kullan; yeni terim uydurma
-- Çalışan sistemde güvenli migration sırası (nullable ekle → doldur → kısıt → eski sil)
-```
-
-## 3. `solution-architect` çapraz kontrolü (full mod)
+## 2. Invoke `sql-developer`
 
 ```
-<ER ÖZETİ: tablolar, ilişkiler, kritik kısıtlar>
+Database: <choice + version>
+Data dictionary: <the full term table>
+Related requirements: <REQ id + data-related behaviour summary>
+Existing schema: <table + column list, not DDL>
+Last migration: <number>
+Transaction boundaries: <from the architecture>
 
-Görev: Bu model mimariye uyuyor mu?
-1. İşlem (transaction) sınırları model ile uyumlu mu
-2. Modül sınırları ile tablo sahipliği çelişiyor mu
-3. Sorgu desenleri N+1 veya karmaşık join'e zorluyor mu
-4. Ölçek NFR'i bu modelde tutar mı
-En fazla 10 satır. "ONAY|ŞARTLI|RET" ile başla.
+Task: produce the data model.
+
+1. ER diagram (Mermaid erDiagram) — correct relationship cardinalities
+2. For each table:
+   - Purpose (one sentence)
+   - Columns: name, type, nullability, default, description
+   - Primary key, foreign keys (with ON DELETE behaviour)
+   - Uniqueness constraints (business keys)
+   - CHECK constraints (the database counterpart of business rules)
+   - Deletion strategy: hard / soft (deleted_at) / archive
+3. Indexes — for each, WRITE DOWN which query it speeds up
+4. Migration files: NNNN_<name>.sql, each with -- +up / -- +down sections
+5. The full schema.sql (the target state after migration)
+6. If you denormalized, give the rationale and state whether an ADR is needed
+
+Mandatory rules:
+- Naming: tables plural snake_case, FK <singular>_id, indexes ix_/uq_/ck_/fk_
+- created_at, updated_at on every table as timestamptz (UTC)
+- Money: numeric or minor-unit bigint — float FORBIDDEN
+- Constraints > application code: the database must not accept corrupt data
+- Use the terms from the data dictionary; do not invent new ones
+- Safe migration ordering on a live system (add nullable → backfill → constrain → drop old)
 ```
 
-## 4. Doğrulama
-
-Migration dosyalarını gerçekten çalıştırabiliyorsan (yerel veritabanı varsa):
-`up → down → up` sırasıyla test et ve çıktıyı raporla.
-Çalıştıramıyorsan bunu **açıkça belirt** — "test edilmedi" yaz, "çalışır" deme.
-
-## 5. Sun
+## 3. `solution-architect` cross-check (full mode)
 
 ```
-## Veri Modeli
-Tablolar: <N> | İlişkiler: <M> | Index: <K>
+<ER SUMMARY: tables, relationships, critical constraints>
 
-| Tablo | Amaç | Satır tahmini | Silme stratejisi |
-
-Migration: <dosyalar>
-Kısıtlar: <önemli CHECK/UNIQUE listesi>
-⚠ Veri sözlüğünde olmayan yeni terim: <varsa>
+Task: does this model fit the architecture?
+1. Are transaction boundaries compatible with the model
+2. Does table ownership conflict with module boundaries
+3. Do the query patterns force N+1 or complex joins
+4. Will the scale NFR hold with this model
+At most 10 lines. Begin with "APPROVED|CONDITIONAL|REJECTED".
 ```
 
-`AskUserQuestion` ile onay al.
+## 4. Verification
 
-## 6. Yaz
+If you can actually run the migrations (a local database exists), test them in
+`up → down → up` order and report the output.
+If you cannot run them, **say so explicitly** — write "not tested", never "it works".
+
+## 5. Present
+
+```
+## Data Model
+Tables: <N> | Relationships: <M> | Indexes: <K>
+
+| Table | Purpose | Row estimate | Deletion strategy |
+
+Migrations: <files>
+Constraints: <important CHECK/UNIQUE list>
+⚠ New terms not in the data dictionary: <if any>
+```
+
+Get approval via `AskUserQuestion`.
+
+## 6. Write
 
 - `docs/data/ER.md`, `db/schema.sql`, `db/migrations/*.sql`
-- Veri sözlüğüne yeni terim eklendiyse **`business-analyst`'e öneri** olarak raporla
-  (sen data-dictionary.md'yi değiştirmezsin — sahibi BA)
-- `docs/DECISIONS.md`'ye model kararı satırı
+- If new terms were added, report them as a **proposal to `business-analyst`**
+  (you do not modify data-dictionary.md — the BA owns it)
+- A model-decision line in `docs/DECISIONS.md`
 
-## 7. Kapat
+## 7. Close
 
 ```
-✓ Veri modeli → docs/data/ER.md + db/schema.sql
-  <N> tablo | <M> migration | up/down test: <sonuç>
+✓ Data model → docs/data/ER.md + db/schema.sql
+  <N> tables | <M> migrations | up/down test: <result>
 
-▶ Sonraki: /api-contract (yapılmadıysa) veya /epics
+▶ Next: /api-contract (if not done) or /epics
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- Veri sözlüğü **tam** gömülür (kısa ve kritik). REQ'ler sadece veri ile ilgili özet.
-- Mevcut şema DDL olarak değil, **tablo+sütun listesi** olarak gömülür.
-- `solution-architect` çapraz kontrolü sadece `full` modda.
+- The data dictionary is embedded **in full** (short and critical). REQs only as
+  data-related summaries.
+- The existing schema is embedded as a **table+column list**, not as DDL.
+- The `solution-architect` cross-check runs only in `full` mode.

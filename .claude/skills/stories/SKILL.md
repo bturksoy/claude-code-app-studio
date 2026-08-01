@@ -1,174 +1,174 @@
 ---
 name: stories
-description: Bir epic'i story'lere böler. Her story kendi kendine yeterli bir GÖREV PAKETİ olarak yazılır — geliştirici agent başka dosya okumadan implement edebilir. Story tipi ve test senaryoları QA Lead tarafından atanır. Token optimizasyonunun kalbi.
+description: Breaks an epic into stories. Each story is written as a self-sufficient TASK PACKET so the developer agent can implement it without opening any other file. Story types and test scenarios are assigned by the QA Lead. The heart of token optimization.
 ---
 
 # /stories <epic-slug>
 
-Sahip: `business-analyst` + `qa-lead`, denetim: `solution-architect` (full mod).
-Çıktı: `product/backlog/epics/<slug>/story-NNN-<slug>.md`
+Owner: `business-analyst` + `qa-lead`, review: `solution-architect` (full mode).
+Output: `product/backlog/epics/<slug>/story-NNN-<slug>.md`
 
-**Bu skill sistemin en kritik parçasıdır.** Story dosyasının kalitesi, sonraki tüm
-geliştirme adımlarının token maliyetini belirler. İyi bir story = 1 dosya okuma.
-Kötü bir story = 8 dosya okuma + geri dönüşler.
+**This skill is the most critical part of the system.** The quality of the story file
+determines the token cost of every development step that follows. A good story = 1 file
+read. A bad story = 8 file reads plus round-trips.
 
 ---
 
-## 1. Girdiyi yükle
+## 1. Load the input
 
-Argüman yoksa `product/backlog/index.md`'den story'si olmayan ilk epic'i öner.
+Without an argument, suggest the first epic in `product/backlog/index.md` that has no stories.
 
-Oku:
+Read:
 - `product/backlog/epics/<slug>/EPIC.md`
-- Epic'in kapsadığı REQ'ler — `FRD.md`'den **tam metin** (davranış, iş kuralları,
-  kabul kriterleri, hata tablosu)
-- Epic'in listelediği ADR'lerin **"Uygulama rehberi"** bölümleri
-- İlgili `openapi.yaml` endpoint tanımları
-- İlgili `ER.md` tablo tanımları
-- İlgili wireframe spesifikasyonları
+- The REQs covered by the epic — **full text** from `FRD.md` (behaviour, business rules,
+  acceptance criteria, error table)
+- The **"Implementation guidance"** sections of the ADRs the epic lists
+- The relevant `openapi.yaml` endpoint definitions
+- The relevant `ER.md` table definitions
+- The relevant wireframe specifications
 
-**ADR doğrulaması:** Epic'te listelenen her ADR dosyası gerçekten var mı? Yoksa dur:
-> "Epic ADR-NNNN'e referans veriyor ama dosya bulunamadı. `/adr` çalıştır veya
-> epic'teki referansı düzelt. Story yazılamaz."
+**ADR validation:** does every ADR file listed in the epic actually exist? If not, stop:
+> "The epic references ADR-NNNN but the file was not found. Run `/adr` or fix the
+> reference in the epic. Stories cannot be written."
 
-Durumu `Önerilen` olan ADR varsa ilgili story `Bloke` durumunda yazılır.
+If a governing ADR has status `Proposed`, the related story is written with status `Blocked`.
 
-## 2. Story tipi sınıflandırması
+## 2. Story type classification
 
-| Tip | Ne zaman | Zorunlu kanıt |
+| Type | When | Required evidence |
 |---|---|---|
-| **Logic** | İş kuralı, hesaplama, durum geçişi, validasyon | Unit test |
-| **Integration** | 2+ bileşen, API çağrısı, kuyruk, dış servis | Integration test |
-| **Data** | Şema, migration, index, veri dönüşümü | Migration up/down + şema güncel |
-| **UI** | Ekran, komponent, form, navigasyon | Komponent testi veya kanıt dosyası |
-| **Infra** | CI/CD, ortam, IaC, izleme | Pipeline çıktısı + rollback yazılı |
-| **Config** | Sadece ayar/veri, yeni mantık yok | Smoke kaydı |
+| **Logic** | Business rule, calculation, state transition, validation | Unit test |
+| **Integration** | 2+ components, API call, queue, external service | Integration test |
+| **Data** | Schema, migration, index, data transformation | Migration up/down + schema current |
+| **UI** | Screen, component, form, navigation | Component test or evidence file |
+| **Infra** | CI/CD, environment, IaC, monitoring | Pipeline output + written rollback |
+| **Config** | Settings/data only, no new logic | Smoke record |
 
-Karma story'de **en yüksek riskli tip** geçerlidir.
+For mixed stories, the **highest-risk type** applies.
 
-## 3. `business-analyst` çağır — kırılım
+## 3. Invoke `business-analyst` — the breakdown
 
 ```
-<EPIC BİLGİSİ>
-<REQ'LERİN TAM METNİ — davranış, BR-*, kabul kriterleri, hata tablosu>
-<İLGİLİ ADR UYGULAMA REHBERLERİ>
-<İLGİLİ API ENDPOINT'LERİ>
-<İLGİLİ TABLOLAR>
-<İLGİLİ EKRAN SPESİFİKASYONLARI>
-<MODÜL LİSTESİ ve BAĞIMLILIK YÖNÜ>
+<EPIC INFORMATION>
+<FULL TEXT OF THE REQs: behaviour, BR-*, acceptance criteria, error table>
+<RELEVANT ADR IMPLEMENTATION GUIDANCE>
+<RELEVANT API ENDPOINTS>
+<RELEVANT TABLES>
+<RELEVANT SCREEN SPECIFICATIONS>
+<MODULE LIST and DEPENDENCY DIRECTION RULE>
 
-Görev: Bu epic'i story'lere böl.
+Task: break this epic into stories.
 
-Kurallar:
-1. Bir story = tek odaklı bir oturumda bitecek iş (1-3 gün / 2-4 saatlik odak)
-2. Bir story = bir sahip = bir ana modül. İki modüle yayılıyorsa BÖL.
-3. Sıra: sözleşme/şema → temel davranış → sınır durumları → arayüz → cila
-4. Her kabul kriteri (AC) tam olarak bir story'ye ait olmalı — bölünmemeli
-5. Her story'ye tip ata (Logic/Integration/Data/UI/Infra/Config)
-6. Her story'ye sahip rol ata (frontend-developer, backend-developer,
+Rules:
+1. One story = work finishable in one focused session (1-3 days / 2-4 hours of focus)
+2. One story = one owner = one main module. If it spans two modules, SPLIT IT.
+3. Ordering: contract/schema → core behaviour → edge cases → interface → polish
+4. Each acceptance criterion (AC) belongs to exactly one story — never split one
+5. Assign a type to each story (Logic/Integration/Data/UI/Infra/Config)
+6. Assign an owner role to each story (frontend-developer, backend-developer,
    sql-developer, devops-engineer, data-engineer, test-engineer)
-7. Bağımlılıkları belirt: "Önce X bitmeli", "Bunu Y bekliyor"
+7. State the dependencies: "X must finish first", "Y is waiting on this"
 
-Önce SADECE story listesini ver:
-| # | Başlık | Tip | Sahip | REQ | AC | Bağımlı | Tahmin |
+Give ONLY the story list first:
+| # | Title | Type | Owner | REQ | AC | Depends on | Estimate |
 
-Detayları henüz yazma.
+Do not write the details yet.
 ```
 
-## 4. `qa-lead` çağır — test senaryoları
+## 4. Invoke `qa-lead` — test scenarios
 
-BA'nın listesi geldikten sonra (sıralı, paralel değil):
-
-```
-<STORY LİSTESİ>
-<İLGİLİ KABUL KRİTERLERİ — Given/When/Then>
-
-Görev:
-1. Story tiplerini doğrula. Yanlış atanmış varsa düzelt ve gerekçelendir.
-2. Her Logic ve Integration story'si için somut test senaryosu spesifikasyonu üret:
-   TC-<REQ-ID>-NN: <başlık>
-     Given: <önkoşul>  When: <eylem>  Then: <assert edilecek somut sonuç>
-     Sınır durumları: <liste>  Öncelik: P0|P1|P2
-3. Her UI story'si için manuel doğrulama adımları:
-   Kurulum: <nasıl bu duruma gelinir>  Doğrula: <ne aranır>  Geçme koşulu: <net>
-4. Test edilemez kabul kriteri varsa BELİRT ve yeniden yazılmış halini öner.
-
-Geliştirici bu senaryolara karşı kod yazacak — sıfırdan test icat etmeyecek.
-```
-
-## 5. `solution-architect` denetimi (full mod)
+After the BA's list arrives (sequential, not parallel):
 
 ```
-<STORY LİSTESİ + modül atamaları>
-Görev: Mimari uygunluk. ARCH-STORY kapısı.
-- Her story tek modülde mi kalıyor?
-- Sözleşme üreten story'ler tüketenlerden önce mi?
-- Bağımlılık zinciri 3'ten uzun mu?
-- Aynı dosyaya yazacak paralel story var mı?
-Yanıtına "ARCH-STORY: ONAY|ŞARTLI|RET" ile başla. En fazla 10 satır.
+<STORY LIST>
+<RELEVANT ACCEPTANCE CRITERIA — Given/When/Then>
+
+Task:
+1. Validate the story types. Correct any that are wrong and justify it.
+2. For every Logic and Integration story, produce concrete test scenario specifications:
+   TC-<REQ-ID>-NN: <title>
+     Given: <precondition>  When: <action>  Then: <concrete assertion>
+     Edge cases: <list>  Priority: P0|P1|P2
+3. For every UI story, manual verification steps:
+   Setup: <how to reach this state>  Verify: <what to look for>  Pass condition: <unambiguous>
+4. If an acceptance criterion is not testable, SAY SO and propose a rewritten version.
+
+The developer will code against these scenarios — they will not invent tests from scratch.
 ```
 
-## 6. Kullanıcıya sun
+## 5. `solution-architect` review (full mode)
 
 ```
-## Story Kırılımı — Epic: <ad>
+<STORY LIST + module assignments>
+Task: architectural fit. The ARCH-STORY gate.
+- Does each story stay within one module?
+- Do contract-producing stories come before consuming ones?
+- Is any dependency chain longer than 3?
+- Are there parallel stories that would write to the same file?
+Begin your reply with "ARCH-STORY: APPROVED|CONDITIONAL|REJECTED". At most 10 lines.
+```
 
-| # | Başlık | Tip | Sahip | REQ | Tahmin | Bağımlı |
+## 6. Present to the user
+
+```
+## Story Breakdown — Epic: <name>
+
+| # | Title | Type | Owner | REQ | Estimate | Depends on |
 | 001 | ... | Data | sql-developer | REQ-X-001 | S | — |
 
-Toplam: <N> story  (Logic <a>, Integration <b>, Data <c>, UI <d>, Infra <e>)
-Kapsanan AC: <X>/<Y>
-Bloke story: <varsa — nedeniyle>
-Kapı: ARCH-STORY <verdikt/atlandı>
+Total: <N> stories  (Logic <a>, Integration <b>, Data <c>, UI <d>, Infra <e>)
+ACs covered: <X>/<Y>
+Blocked stories: <if any — with the reason>
+Gate: ARCH-STORY <verdict/skipped>
 
-⚠ Kapsanmayan kabul kriteri: <varsa liste>
+⚠ Uncovered acceptance criteria: <list, if any>
 ```
 
-`AskUserQuestion`: `<N> story'yi yaz (Önerilen)` / `Kırılımı değiştireceğim` /
-`Önce sadece ilk 3'ünü yaz`
+`AskUserQuestion`: `Write the <N> stories (Recommended)` / `I want to change the breakdown` /
+`Write only the first 3 for now`
 
-## 7. Story dosyalarını yaz — GÖREV PAKETİ FORMATI
+## 7. Write the story files — TASK PACKET FORMAT
 
-**En kritik bölüm.** Story kendi kendine yeterli olmalı; geliştirici agent
-`docs/` altındaki hiçbir dosyayı açmak zorunda kalmamalı.
+**The most critical section.** The story must be self-sufficient; the developer agent
+must never need to open a file under `docs/`.
 
 ```markdown
-# Story <NNN>: <başlık>
+# Story <NNN>: <title>
 
-> **Epic:** <ad> | **Tip:** <tip> | **Sahip:** <agent> | **Durum:** Hazır
-> **Tahmin:** <S/M/L veya saat> | **Sprint:** — | **Güncellenme:** <tarih>
+> **Epic:** <name> | **Type:** <type> | **Owner:** <agent> | **Status:** Ready
+> **Estimate:** <S/M/L or hours> | **Sprint:** — | **Updated:** <date>
 
-## Ne yapılacak
-<2-3 cümle. Geliştiricinin ilk okuyacağı şey. Teknik ve somut.>
+## What to build
+<2-3 sentences. The first thing the developer reads. Concrete and technical.>
 
-## Kabul kriterleri
-*Kaynak: REQ-<ID> — buraya KOPYALANDI, referans değil*
+## Acceptance criteria
+*Source: REQ-<ID> — COPIED here, not referenced*
 
-- [ ] **AC-1:** <kriter metni>
-  - Given: <önkoşul>
-  - When: <eylem>
-  - Then: <gözlemlenebilir sonuç>
+- [ ] **AC-1:** <criterion text>
+  - Given: <precondition>
+  - When: <action>
+  - Then: <observable result>
 - [ ] **AC-2:** ...
 
-## İş kuralları
-*Kaynak: REQ-<ID> — kopyalandı*
-- **BR-1:** <kural>
-- **BR-2:** <kural>
+## Business rules
+*Source: REQ-<ID> — copied*
+- **BR-1:** <rule>
+- **BR-2:** <rule>
 
-## Hata ve sınır durumları
-| Durum | Beklenen davranış | Kullanıcıya mesaj |
+## Errors and edge cases
+| Case | Expected behaviour | Message to user |
 |---|---|---|
 
-## Uygulanacak mimari kararlar
-*ADR-<NNNN>: <başlık>*
-<ADR'nin "Uygulama rehberi" bölümü BURAYA KOPYALANIR.
-Geliştirici ADR dosyasını açmayacak.>
+## Architecture decisions to apply
+*ADR-<NNNN>: <title>*
+<The ADR's "Implementation guidance" section is COPIED HERE.
+The developer will not open the ADR file.>
 
-**Zorunlu desen:** <...>
-**Yasak desen:** <...>
+**Required pattern:** <...>
+**Forbidden pattern:** <...>
 
-## Sözleşme
-*İlgili endpoint / tablo / komponent tanımları — kopyalandı*
+## Contract
+*Relevant endpoint / table / component definitions — copied*
 
 ```yaml
 POST /orders
@@ -177,69 +177,69 @@ POST /orders
 ```
 
 ```sql
--- ilgili tablo yapısı
+-- relevant table structure
 ```
 
-## Dokunulacak dosyalar
-*Tespit edilmiş yollar — tahmin değil*
-- `src/backend/orders/order.service.ts` — <ne yapılacak>
-- `tests/backend/orders/create-order.test.ts` — yeni
+## Files to touch
+*Identified paths — not guesses*
+- `src/backend/orders/order.service.ts` — <what changes>
+- `tests/backend/orders/create-order.test.ts` — new
 
-## Kapsam DIŞI
-*Komşu story'ler halleder — burada YAPMA*
-- Story <NNN+1>: <ne>
-- Story <NNN+2>: <ne>
+## Out of scope
+*Neighbouring stories handle these — do NOT do them here*
+- Story <NNN+1>: <what>
+- Story <NNN+2>: <what>
 
-## Test senaryoları
-*QA Lead tarafından yazıldı. Sıfırdan test icat etme — bunlara karşı kodla.*
+## Test scenarios
+*Written by the QA Lead. Do not invent tests — code against these.*
 
 **TC-<REQ>-01** — AC-1
 - Given: <...> | When: <...> | Then: <...>
-- Sınır durumları: <...>
-- Öncelik: P0
+- Edge cases: <...>
+- Priority: P0
 
-## Zorunlu kanıt
-**Tip:** <tip>
-**Gereken:** <tipin zorunlu kanıtı — DoD'den>
-**Dosya:** `tests/<yol>/<slug>.test.<ext>`
-**Durum:** [ ] Henüz oluşturulmadı
+## Required evidence
+**Type:** <type>
+**Required:** <the type's mandatory evidence, from the DoD>
+**File:** `tests/<path>/<slug>.test.<ext>`
+**Status:** [ ] Not yet created
 
-## Bağımlılıklar
-**Önce bitmeli:** <story-NNN veya Yok>
-**Bunu bekliyor:** <story-NNN veya Yok>
+## Dependencies
+**Must finish first:** <story-NNN or None>
+**Waiting on this:** <story-NNN or None>
 
-## İzlenebilirlik
-REQ-<ID> → GOAL-<NN> | ADR-<NNNN> | Ekran: <varsa>
+## Traceability
+REQ-<ID> → GOAL-<NN> | ADR-<NNNN> | Screen: <if any>
 ```
 
-Ayrıca:
-- `EPIC.md`'deki "Story'ler" bölümünü tabloyla doldur
-- `product/backlog/index.md`'de epic satırının `Story` sütununu güncelle
+Also:
+- Fill in the "Stories" table in `EPIC.md`
+- Update the `Stories` column of the epic row in `product/backlog/index.md`
 - `.state/project.json` → `counters.stories`
 - `.state/gates.jsonl` → ARCH-STORY
 
-## 8. Kapat
+## 8. Close
 
 ```
-✓ <N> story → product/backlog/epics/<slug>/
+✓ <N> stories → product/backlog/epics/<slug>/
   Logic <a> | Integration <b> | Data <c> | UI <d>
 
-Story'ler görev paketi formatında — geliştirici agent tek dosya okuyacak.
+The stories are in task-packet format — the developer agent will read one file.
 
-▶ Sonraki:
-   /stories <sonraki-epic>   (başka epic varsa)
-   /sprint-plan              (tüm epic'ler kırıldıysa)
+▶ Next:
+   /stories <next-epic>   (if another epic remains)
+   /sprint-plan           (once every epic is broken down)
 ```
 
 ---
 
-## Token notu — bu skill neden pahalı ama karlı
+## Token note — why this skill is expensive but profitable
 
-Bu skill **bilerek** çok bağlam yükler (REQ tam metni, ADR rehberi, sözleşmeler).
-Çünkü bu maliyeti **bir kez** öder, karşılığında her `/dev-task` çağrısında
-8 dosya okuma yerine 1 dosya okuma kazanır.
+This skill **deliberately** loads a lot of context (full REQ text, ADR guidance,
+contracts). It pays that cost **once** and in return turns every `/dev-task` call from
+8 file reads into 1.
 
-- 2-3 agent çağrısı (BA → QA → [full: SA])
-- Story'leri **epic bazında** yaz, tüm backlog'u birden değil
-- Kopyalama burada **doğrudur** — SSoT kuralının bilinçli istisnası.
-  Kaynak değişirse `/context-compact` senkronizasyonu raporlar.
+- 2-3 agent calls (BA → QA → [full: SA])
+- Write stories **per epic**, never the whole backlog at once
+- Copying is **correct** here — a deliberate exception to the SSoT rule.
+  If a source changes, `/context-compact` reports the desynchronization.

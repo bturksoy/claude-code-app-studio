@@ -1,141 +1,141 @@
 ---
 name: team-feature
-description: Bir özelliği (epic'i) tüm ekiple uçtan uca yürütür — sözleşme, veri, servis, arayüz, test, inceleme. Agent'ları doğru sırada ve mümkün olan yerde paralel çalıştırır. Dikey dilim teslimatı.
+description: Delivers a feature (epic) end to end with the whole team — contract, data, service, interface, tests, review. Runs agents in the right order and in parallel where possible. Vertical slice delivery.
 ---
 
 # /team-feature <epic-slug>
 
-`delivery-manager` orkestrasyonunda çok agent'lı dikey dilim.
-Tek tek `/dev-task` çağırmak yerine bir özelliği bir seferde bitirir.
+A multi-agent vertical slice orchestrated by `delivery-manager`.
+Instead of calling `/dev-task` one story at a time, it finishes a whole feature in one pass.
 
-**Ne zaman kullanılır:** Epic'in story'leri hazır ve birbirine bağımlı;
-sıralı `/dev-task` çağrıları arasında bağlam kaybı olacak.
+**When to use:** the epic's stories are ready and interdependent; sequential `/dev-task`
+calls would lose context between them.
 
-**Ne zaman kullanılmaz:** Tek story'lik iş (`/dev-task` yeter) veya
-story'ler hazır değil (`/stories` çalıştır).
+**When not to use:** single-story work (`/dev-task` is enough) or stories that are not
+ready (run `/stories`).
 
 ---
 
-## 1. Hazırlık
+## 1. Preparation
 
-Epic'in story'lerini yükle (başlık blokları). Kontrol et:
-- Tüm story'ler `Hazır` mı? Bloke olan varsa listele ve dur.
-- Bağımlılık grafiği döngüsüz mü?
-- Toplam story sayısı ≤ 8? Fazlaysa iki turda yap.
+Load the epic's stories (header blocks). Check:
+- Are all stories `Ready`? List any that are blocked and stop.
+- Is the dependency graph acyclic?
+- Is the total story count ≤ 8? If more, do it in two passes.
 
-Bağımlılık grafiğinden **dalga (wave)** çıkar:
-
-```
-Dalga 1 (paralel): bağımlılığı olmayan story'ler
-Dalga 2 (paralel): sadece Dalga 1'e bağımlı olanlar
-Dalga 3: ...
-```
-
-Aynı modüle dokunan story'ler **aynı dalgaya konulmaz** — sonraki dalgaya kaydır.
-
-## 2. Planı sun
+Derive **waves** from the dependency graph:
 
 ```
-## Dikey Dilim: <epic adı>
-
-Dalga 1 — paralel  [sözleşme & temel]
-  story-001  sql-developer      <başlık>
-  story-002  solution-architect <başlık>
-
-Dalga 2 — paralel  [servis & arayüz]
-  story-003  backend-developer  <başlık>
-  story-004  frontend-developer <başlık>  (mock ile başlar)
-
-Dalga 3 — sıralı   [entegrasyon & test]
-  story-005  frontend-developer <başlık>  (gerçek API'ye geçiş)
-  story-006  test-engineer      <başlık>
-
-Toplam: <N> story | <M> agent çağrısı tahmini
+Wave 1 (parallel): stories with no dependencies
+Wave 2 (parallel): stories depending only on Wave 1
+Wave 3: ...
 ```
 
-`AskUserQuestion`: `Başlat (Önerilen)` / `Sadece Dalga 1'i çalıştır` /
-`Tek tek /dev-task ile ilerleyeceğim`
+Stories that touch the same module are **never placed in the same wave** — push them
+to the next one.
 
-## 3. Dalgaları yürüt
-
-Her dalga için:
-
-**a) Paralel çağrı** — dalgadaki tüm story'ler tek mesajda, her biri kendi
-agent'ına. Her prompt `/dev-task` adım 3'teki formatı kullanır (story tam gömülü).
-
-**b) Sonuçları topla.** Her agent şu formatta döner:
-`VERDİKT / ÖZET / DOSYALAR / TESTLER / KABUL KRİTERLERİ / NOT`
-
-**c) Çakışma kontrolü.** İki agent aynı dosyaya yazdıysa:
-- Değişiklikleri karşılaştır, çakışma varsa kullanıcıya göster
-- Bu bir **planlama hatasıdır** — sonraki `/sprint-plan` için not düş
-
-**d) Dalga kapısı.** Bir story `BLOKE` döndüyse:
-- Ona bağımlı sonraki dalga story'lerini **durdur**
-- Bağımsız olanlar devam eder
-- Kullanıcıya durumu bildir, escalation yap
-
-**e) Devir notu.** Dalga 2'ye geçerken, Dalga 1'in çıktısından sonraki dalganın
-ihtiyacı olan bilgiyi **≤200 kelimelik devir paketi** olarak hazırla ve
-sonraki dalganın prompt'una ekle:
+## 2. Present the plan
 
 ```
-ÖNCEKİ DALGADAN:
-- <story-001> tamamlandı → <ne üretildi: tablo/endpoint/tip adları>
-- Dikkat: <varsayım, tuzak>
-- Kullanabileceğin: <dosya yolları, fonksiyon/tip adları>
+## Vertical Slice: <epic name>
+
+Wave 1 — parallel  [contract & foundation]
+  story-001  sql-developer      <title>
+  story-002  solution-architect <title>
+
+Wave 2 — parallel  [service & interface]
+  story-003  backend-developer  <title>
+  story-004  frontend-developer <title>  (starts against mocks)
+
+Wave 3 — sequential [integration & testing]
+  story-005  frontend-developer <title>  (switches to the real API)
+  story-006  test-engineer      <title>
+
+Total: <N> stories | Estimated agent calls: <M>
 ```
 
-## 4. Toplu kod incelemesi (lean+ mod)
+`AskUserQuestion`: `Start (Recommended)` / `Run Wave 1 only` /
+`I'll proceed story by story with /dev-task`
 
-Tüm dalgalar bitince **tek bir** `code-reviewer` çağrısı yap (story başına ayrı değil):
+## 3. Run the waves
 
-```
-<TÜM DEĞİŞEN DOSYALARIN DIFF'İ>
-<EPIC'İN kabul kriterleri ve kapsam sınırı>
-<İLGİLİ kural dosyaları>
+For each wave:
 
-Görev: CR-CODE — dikey dilim incelemesi. Ek olarak:
-- Katmanlar arası tutarlılık (FE'nin beklediği ile BE'nin döndürdüğü aynı mı)
-- Sözleşme uyumu (OpenAPI ile gerçek implementasyon)
-- Tekrar eden kod (iki agent aynı yardımcıyı ayrı ayrı yazmış olabilir)
-```
+**a) Parallel call** — every story in the wave in one message, each to its own agent.
+Each prompt uses the format from `/dev-task` step 3 (story fully embedded).
 
-## 5. Entegrasyon doğrulaması
+**b) Collect the results.** Each agent returns:
+`VERDICT / SUMMARY / FILES / TESTS / ACCEPTANCE CRITERIA / NOTE`
 
-Uçtan uca test çalıştır (varsa). Yoksa `test-engineer`'a bir tane yazdır:
+**c) Conflict check.** If two agents wrote to the same file:
+- Compare the changes and show any conflict to the user
+- This is a **planning error** — note it for the next `/sprint-plan`
 
-```
-Epic: <ad> — ana kullanıcı yolculuğu
-Görev: Bu dilim için 1 adet uçtan uca test yaz ve çalıştır.
-Kapsam: <akış adımları>
-```
+**d) Wave gate.** If a story returned `BLOCKED`:
+- **Stop** the stories in later waves that depend on it
+- Independent ones continue
+- Report the situation to the user and escalate
 
-## 6. Sun
+**e) Handoff note.** When moving to Wave 2, prepare what the next wave needs from
+Wave 1's output as a **handoff packet of ≤200 words** and add it to the next wave's prompt:
 
 ```
-✓ Dikey dilim tamamlandı: <epic>
+FROM THE PREVIOUS WAVE:
+- <story-001> complete → <what was produced: table/endpoint/type names>
+- Watch out: <assumption, pitfall>
+- Available to you: <file paths, function/type names>
+```
 
-| Story | Sahip | Durum | Testler |
+## 4. Bulk code review (lean+ mode)
+
+Once all waves finish, make **a single** `code-reviewer` call (not one per story):
+
+```
+<DIFF OF ALL CHANGED FILES>
+<THE EPIC'S acceptance criteria and scope boundary>
+<RELEVANT rules files>
+
+Task: CR-CODE — vertical slice review. Additionally check:
+- Cross-layer consistency (does what the FE expects match what the BE returns)
+- Contract conformance (OpenAPI vs the actual implementation)
+- Duplicated code (two agents may have written the same helper separately)
+```
+
+## 5. Integration verification
+
+Run the end-to-end tests (if any). If there are none, have `test-engineer` write one:
+
+```
+Epic: <name> — the main user journey
+Task: write and run 1 end-to-end test for this slice.
+Scope: <flow steps>
+```
+
+## 6. Present
+
+```
+✓ Vertical slice complete: <epic>
+
+| Story | Owner | Status | Tests |
 | 001 | sql-developer | ✓ | 4/4 |
-| 004 | frontend-developer | ⚠ | 6/7 — <not> |
+| 004 | frontend-developer | ⚠ | 6/7 — <note> |
 
-Toplam: <a> tamamlandı, <b> bloke
-Kod incelemesi: CR-CODE <verdikt>
-Uçtan uca: <sonuç>
+Total: <a> complete, <b> blocked
+Code review: CR-CODE <verdict>
+End-to-end: <result>
 
-Planlama notları (sonraki sprint için):
-- <çakışma veya bağımlılık sürprizi>
+Planning notes (for the next sprint):
+- <conflict or dependency surprise>
 
-▶ Sonraki: /dod-check <epic>  → /qa-run <epic>
+▶ Next: /dod-check <epic>  → /qa-run <epic>
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- Paralellik **wall-clock** kazandırır, token kazandırmaz — maliyet story sayısıyla
-  doğrusaldır. Aynı işi yapıyorsun, sadece daha hızlı.
-- **Toplu kod incelemesi** gerçek tasarruf: 6 ayrı inceleme yerine 1 tane.
-- Devir paketleri ≤200 kelime — dalga arası bağlam aktarımı ucuz olmalı.
-- 8 story üst sınırı: fazlası hem çakışma hem bağlam riski.
+- Parallelism buys **wall-clock time, not tokens** — cost still scales with story count.
+  You are doing the same work, just faster.
+- **Bulk code review** is the real saving: 1 review instead of 6.
+- Handoff packets are ≤200 words — context transfer between waves must stay cheap.
+- The 8-story ceiling exists because beyond it both conflict and context risk rise.

@@ -1,104 +1,104 @@
 ---
 name: threat-model
-description: STRIDE tabanlı güvenlik tehdit modeli üretir. Varlıkları, güven sınırlarını ve tehditleri belirler, her tehdide önlem ve doğrulama yöntemi atar. SEC-THREAT kapısını işletir.
+description: Produces a STRIDE-based security threat model. Identifies assets, trust boundaries and threats, and assigns a mitigation and verification method to each. Operates the SEC-THREAT gate.
 ---
 
 # /threat-model
 
-Sahip: `security-engineer`. Çıktı: `docs/security/threat-model.md`
+Owner: `security-engineer`. Output: `docs/security/threat-model.md`
 
-Ön koşul: `ARCHITECTURE.md` (+ varsa `openapi.yaml`).
-`full` modda zorunlu; `lean` modda kullanıcı isterse; `solo` modda atlanır.
+Prerequisite: `ARCHITECTURE.md` (plus `openapi.yaml` if available).
+Mandatory in `full` mode; optional in `lean`; skipped in `solo`.
 
 ---
 
-## 1. Girdi
+## 1. Input
 
-- Mimari: konteynerler, güven sınırları, dış sistemler
-- API: endpoint listesi + auth şemaları (tam YAML değil)
-- Veri: hangi varlıklar hassas (kişisel veri, finansal, sağlık, kimlik bilgisi)
-- Uyumluluk gereksinimleri (KVKK/GDPR/PCI vb. — `NFR.md`'den)
-- Kullanıcı rolleri ve yetki matrisi
+- Architecture: containers, trust boundaries, external systems
+- API: endpoint list + auth schemes (not the full YAML)
+- Data: which entities are sensitive (personal, financial, health, credentials)
+- Compliance requirements (GDPR/PCI etc. — from `NFR.md`)
+- User roles and the permission matrix
 
-## 2. `security-engineer` çağır
+## 2. Invoke `security-engineer`
 
 ```
-<BAĞLAM BLOĞU>
+<CONTEXT BLOCK>
 
-Görev: STRIDE tehdit modeli üret.
+Task: produce a STRIDE threat model.
 
-1. Varlık envanteri
-   | Varlık | Hassasiyet | Nerede saklanır | Kim erişir | Yasal statü |
+1. Asset inventory
+   | Asset | Sensitivity | Where stored | Who accesses | Legal status |
 
-2. Güven sınırları (Mermaid) — her sınır geçişi bir kontrol noktasıdır
+2. Trust boundaries (Mermaid) — every boundary crossing is a control point
 
-3. Tehdit tablosu — her güven sınırı için STRIDE'ın 6 kategorisini uygula:
+3. Threat table — apply all 6 STRIDE categories to each trust boundary:
    Spoofing, Tampering, Repudiation, Information disclosure,
    Denial of service, Elevation of privilege
-   | # | Sınır | STRIDE | Tehdit senaryosu | Etki | Olasılık | Risk | Önlem | Doğrulama |
-   Tehdit senaryosu SOMUT olmalı: "saldırgan X yaparsa Y elde eder"
+   | # | Boundary | STRIDE | Threat scenario | Impact | Likelihood | Risk | Mitigation | Verification |
+   The threat scenario must be CONCRETE: "if the attacker does X they obtain Y"
 
-4. Her YÜKSEK/KRİTİK risk için:
-   - Zorunlu önlem (uygulanabilir, kod/config düzeyinde)
-   - Doğrulama yöntemi (test kimliği veya kontrol adımı)
-   - Hangi REQ/ADR'ye bağlanacağı
+4. For every HIGH/CRITICAL risk:
+   - The required mitigation (actionable, at code/config level)
+   - The verification method (a test id or a check step)
+   - Which REQ/ADR it will be bound to
 
-5. Kabul edilmesi önerilen riskler (önlem maliyeti > risk) — gerekçeli
+5. Risks recommended for acceptance (mitigation cost > risk) — with rationale
 
-6. Güvenlik gereksinim önerileri: NFR.md'ye eklenmesi gereken maddeler
+6. Security requirement proposals: items that should be added to NFR.md
 
-Kurallar:
-- Saldırı aracı veya exploit kodu ÜRETME — senaryo tarif et
-- Sömürü senaryosu yazamadığın şey bulgu değildir, teorik endişedir
-- Bu projenin ölçeğine uygun ol; 10 kullanıcılı iç araca APT modeli yazma
+Rules:
+- Do NOT produce attack tooling or exploit code — describe the scenario
+- If you cannot write an exploit scenario, it is not a finding but a theoretical concern
+- Match the scale of this project; do not write an APT model for a 10-user internal tool
 
-Yanıtına "SEC-THREAT: ONAY|ŞARTLI|RET" satırıyla başla.
+Begin your reply with "SEC-THREAT: APPROVED|CONDITIONAL|REJECTED".
 ```
 
-## 3. Sun
+## 3. Present
 
 ```
-## Tehdit Modeli
-Varlık: <N> | Güven sınırı: <M> | Tehdit: <K>
+## Threat Model
+Assets: <N> | Trust boundaries: <M> | Threats: <K>
 
-Risk dağılımı: Kritik <a> | Yüksek <b> | Orta <c> | Düşük <d>
+Risk distribution: Critical <a> | High <b> | Medium <c> | Low <d>
 
-Zorunlu önlemler (Kritik/Yüksek):
-| # | Tehdit | Önlem | Nereye bağlanacak |
+Required mitigations (Critical/High):
+| # | Threat | Mitigation | Where it will be bound |
 
-Kabul önerilen riskler: <liste>
-NFR önerileri: <liste>
+Risks recommended for acceptance: <list>
+NFR proposals: <list>
 
-Kapı: SEC-THREAT <verdikt>
+Gate: SEC-THREAT <verdict>
 ```
 
-`AskUserQuestion` ile kabul edilecek riskleri kullanıcıya onaylat — bu bir
-**iş kararıdır**, güvenlik mühendisi tek başına veremez.
+Have the user confirm the risks to accept via `AskUserQuestion` — this is a
+**business decision**, not one the security engineer can make alone.
 
-## 4. Yaz
+## 4. Write
 
 - `docs/security/threat-model.md`
-- Zorunlu önlemleri **NFR olarak** `business-analyst`'e öner (raporda listele —
-  sen `NFR.md`'yi değiştirmezsin)
-- Kabul edilen riskleri `product/risks.md`'ye ekle (sahip + gözden geçirme tarihi)
+- Propose the required mitigations **as NFRs** to `business-analyst` (list them in the
+  report — you do not modify `NFR.md`)
+- Add accepted risks to `product/risks.md` (with owner + review date)
 - `.state/gates.jsonl`
 
-## 5. Kapat
+## 5. Close
 
 ```
-✓ Tehdit modeli → docs/security/threat-model.md
-  <K> tehdit | <a> kritik/yüksek önlem gerekiyor
+✓ Threat model → docs/security/threat-model.md
+  <K> threats | <a> critical/high mitigations required
 
-⚠ Şu önlemler story'lere dönüşmeli: <liste>
-   /epics çalıştırırken bunları dahil et.
+⚠ These mitigations must become stories: <list>
+   Include them when you run /epics.
 
-▶ Sonraki: /epics
+▶ Next: /epics
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **1 agent çağrısı.**
-- Proje ölçeğine uygun derinlik — küçük projede 60 tehdit üretme, 15 yeter.
-- API'nin tamamını gömme; endpoint listesi + auth şeması yeter.
+- **1 agent call.**
+- Depth should match project scale — do not produce 60 threats for a small project; 15 is enough.
+- Do not embed the whole API; the endpoint list plus auth schemes is enough.

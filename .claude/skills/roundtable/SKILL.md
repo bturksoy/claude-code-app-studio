@@ -1,121 +1,121 @@
 ---
 name: roundtable
-description: Herhangi bir konuda birden fazla rolü paralel çalıştırıp farklı merceklerden analiz alır, anlaşma ve çelişkileri ayırır, kararı kullanıcıya sunar. Zor kararlar ve çok disiplinli konular için genel amaçlı tartışma aracı.
+description: Runs several roles in parallel on any topic, gathers analysis through different lenses, separates agreement from disagreement, and presents the decision to the user. A general-purpose discussion tool for hard, cross-disciplinary decisions.
 ---
 
-# /roundtable "<konu>"
+# /roundtable "<topic>"
 
-Genel amaçlı çok-rollü tartışma. `/discovery` bunun özelleşmiş halidir.
+A general-purpose multi-role discussion. `/discovery` is a specialized version of this.
 
 ---
 
-## 1. Konuyu ve katılımcıları belirle
+## 1. Determine the topic and participants
 
-Argüman yoksa sor: *"Hangi konuyu tartışalım?"*
+If there is no argument, ask: *"What topic should we discuss?"*
 
-Konuya göre katılımcı öner (`AskUserQuestion` ile onayla, **en fazla 4 rol**):
+Suggest participants based on the topic (confirm with `AskUserQuestion`, **at most 4 roles**):
 
-| Konu tipi | Önerilen katılımcılar |
+| Topic type | Suggested participants |
 |---|---|
-| Kapsam / öncelik | `product-owner`, `business-analyst`, `delivery-manager` |
-| Teknoloji seçimi | `cto`, `solution-architect`, `devops-engineer` |
-| Veri modeli | `solution-architect`, `sql-developer`, `business-analyst` |
-| Kullanıcı deneyimi | `ux-designer`, `product-owner`, `frontend-developer` |
-| Performans sorunu | `performance-engineer`, `solution-architect`, `sql-developer` |
-| Güvenlik yaklaşımı | `security-engineer`, `solution-architect`, `backend-developer` |
-| Kalite / "bitti" tanımı | `qa-lead`, `business-analyst`, `delivery-manager` |
-| Yayın kararı | `ceo`, `qa-lead`, `devops-engineer` |
+| Scope / priority | `product-owner`, `business-analyst`, `delivery-manager` |
+| Technology choice | `cto`, `solution-architect`, `devops-engineer` |
+| Data model | `solution-architect`, `sql-developer`, `business-analyst` |
+| User experience | `ux-designer`, `product-owner`, `frontend-developer` |
+| Performance problem | `performance-engineer`, `solution-architect`, `sql-developer` |
+| Security approach | `security-engineer`, `solution-architect`, `backend-developer` |
+| Quality / definition of done | `qa-lead`, `business-analyst`, `delivery-manager` |
+| Release decision | `ceo`, `qa-lead`, `devops-engineer` |
 
-**4'ten fazla rol çağırma.** Marjinal fayda düşer, maliyet doğrusal artar.
+**Never invoke more than 4 roles.** Marginal value drops while cost grows linearly.
 
-## 2. Ortak bağlam bloğu hazırla
+## 2. Build a shared context block
 
-Tek bir bağlam bloğu yaz (≤ 50 satır) ve **herkese aynısını** gönder:
-
-```
-KONU: <konu>
-BAĞLAM: <ilgili proje bilgisi — CONTEXT.md'den özet>
-KISITLAR: <bilinen sınırlar>
-KARAR VERİLECEK: <net soru>
-ŞU AN NE VAR: <mevcut durum>
-```
-
-Dosya yolu verme — içeriği göm. Alt-agent arama yapmamalı.
-
-## 3. Paralel çağrı (tek mesajda hepsi)
-
-Her role **kendi merceğini** ver:
+Write a single context block (≤ 50 lines) and send **the same one to everyone**:
 
 ```
-<BAĞLAM BLOĞU>
-
-Mercek: <role özgü açı — aşağıdaki tablodan>
-
-Üret:
-1. Bu konuya kendi alanından bakınca ne görüyorsun (en fazla 5 madde)
-2. En büyük risk / kaçırılan şey nedir
-3. Önerin ve gerekçesi
-4. Öneriyle birlikte kabul ettiğin maliyet
-5. Bu kararın yanlış olduğunu ne zaman anlarız
-
-En fazla 25 satır. Diğer rollerin ne diyeceğini tahmin etme, kendi alanında kal.
+TOPIC: <topic>
+CONTEXT: <relevant project information — summarized from CONTEXT.md>
+CONSTRAINTS: <known limits>
+DECISION REQUIRED: <the precise question>
+CURRENT STATE: <what exists today>
 ```
 
-Mercekler:
+Do not give file paths — embed the content. The subagent should not have to search.
 
-| Rol | Mercek |
+## 3. Parallel call (all in one message)
+
+Give each role **its own lens**:
+
+```
+<CONTEXT BLOCK>
+
+Lens: <role-specific angle — from the table below>
+
+Produce:
+1. What you see when you look at this from your discipline (at most 5 bullets)
+2. The biggest risk / the thing being missed
+3. Your recommendation and its rationale
+4. The cost you accept along with that recommendation
+5. When would we know this decision was wrong
+
+At most 25 lines. Do not guess what the other roles will say; stay in your domain.
+```
+
+Lenses:
+
+| Role | Lens |
 |---|---|
-| `ceo` | İş değeri, maliyet, geri dönülebilirlik |
-| `cto` | Teknoloji riski, operasyon maliyeti, kilitlenme |
-| `product-owner` | Kullanıcı değeri, öncelik, kapsam etkisi |
-| `business-analyst` | Belirsizlik, çelişki, eksik senaryo |
-| `solution-architect` | Bileşen sınırları, bağlantı, NFR karşılığı |
-| `delivery-manager` | Takvim, bağımlılık, kapasite, risk |
-| `ux-designer` | Kullanıcının yaşayacağı deneyim, adım sayısı |
-| `sql-developer` | Veri bütünlüğü, sorgu maliyeti, migration riski |
-| `devops-engineer` | Dağıtım, geri alma, izlenebilirlik, maliyet |
-| `qa-lead` | Test edilebilirlik, regresyon riski |
-| `security-engineer` | Saldırı yüzeyi, veri maruziyeti |
-| `performance-engineer` | Ölçek davranışı, darboğaz |
+| `ceo` | Business value, cost, reversibility |
+| `cto` | Technology risk, operating cost, lock-in |
+| `product-owner` | User value, priority, scope impact |
+| `business-analyst` | Ambiguity, contradiction, missing scenario |
+| `solution-architect` | Component boundaries, coupling, NFR mechanisms |
+| `delivery-manager` | Schedule, dependencies, capacity, risk |
+| `ux-designer` | The experience the user will have, step count |
+| `sql-developer` | Data integrity, query cost, migration risk |
+| `devops-engineer` | Deployment, rollback, observability, cost |
+| `qa-lead` | Testability, regression risk |
+| `security-engineer` | Attack surface, data exposure |
+| `performance-engineer` | Behaviour at scale, bottlenecks |
 
-## 4. Sentez (sen yaparsın)
+## 4. Synthesis (you do this)
 
 ```markdown
-## Round-table: <konu>
-Katılımcılar: <roller>
+## Round-table: <topic>
+Participants: <roles>
 
-### Ortak görüş
-<hepsinin hemfikir olduğu — madde madde>
+### Shared view
+<what everyone agreed on — bulleted>
 
-### Ayrışma
-| # | Konu | <Rol A> | <Rol B> | Neden önemli |
+### Divergence
+| # | Topic | <Role A> | <Role B> | Why it matters |
 
-### Kimsenin söylemediği
-<sentez sırasında fark ettiğin boşluk — varsa>
+### What nobody said
+<the gap you noticed during synthesis — if any>
 
-### Karar seçenekleri
-**A) <ad>** — <ne demek> | Kazanç: <...> | Maliyet: <...> | Geri dönüş: <kolay/zor>
-**B) <ad>** — ...
+### Decision options
+**A) <name>** — <what it means> | Gain: <...> | Cost: <...> | Reversal: <easy/hard>
+**B) <name>** — ...
 
-**Öneri:** <A veya B> — <tek cümle gerekçe>
+**Recommendation:** <A or B> — <one-sentence rationale>
 ```
 
-## 5. Kararı al ve kaydet
+## 5. Take and record the decision
 
-`AskUserQuestion` ile seçenekleri sun (öneri ilk sırada, "(Önerilen)" etiketiyle).
+Present the options with `AskUserQuestion` (recommendation first, labelled "(Recommended)").
 
-Karar sonrası:
-- `docs/DECISIONS.md`'ye tek satır ekle:
-  `| <tarih> | <karar> | kullanıcı | <gerekçe> | /roundtable |`
-- Karar mimari nitelikteyse `/adr` çalıştırmayı öner
-- Karar kapsamı etkiliyorsa `/scope-check` öner
-- Etkilenen rollere ne değiştiğini tek satırda bildir (raporda yaz)
+After the decision:
+- Append one line to `docs/DECISIONS.md`:
+  `| <date> | <decision> | user | <rationale> | /roundtable |`
+- If the decision is architectural, suggest running `/adr`
+- If it affects scope, suggest `/scope-check`
+- Tell the affected roles what changed, in one line each (in the report)
 
 ---
 
-## Token notu
+## Token note
 
-- Katılımcı sayısı **maliyeti doğrusal artırır**. 3 ideal, 4 üst sınır.
-- Herkes aynı bağlam bloğunu alır → prompt cache dostu.
-- Tek tur. İkinci tur sadece kullanıcı yeni bilgi verirse yapılır.
-- Sentez ve karar modelin işi — bunun için ayrı agent açma.
+- Participant count **scales cost linearly**. Three is ideal, four is the ceiling.
+- Everyone receives the same context block → prompt-cache friendly.
+- One round. A second round happens only if the user provides new information.
+- Synthesis and decision are the model's job — do not spawn a separate agent for them.

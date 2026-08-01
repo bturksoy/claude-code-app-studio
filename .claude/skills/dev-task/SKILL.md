@@ -1,151 +1,151 @@
 ---
 name: dev-task
-description: Tek bir story'yi uçtan uca implement eder. Hazırlık kontrolü yapar, doğru geliştirici agent'ı çağırır, testleri çalıştırır, kod incelemesi alır ve story'yi günceller. Ana geliştirme döngüsü.
+description: Implements a single story end to end. Runs a readiness check, invokes the right developer agent, runs the tests, obtains a code review and updates the story. The main development loop.
 ---
 
-# /dev-task <story-yolu>
+# /dev-task <story-path>
 
-Çıktı: kod + testler + güncellenmiş story dosyası.
+Output: code + tests + an updated story file.
 
 ---
 
-## 1. Story'yi yükle ve hazırlık kontrolü
+## 1. Load the story and check readiness
 
-Argüman yoksa mevcut sprintten sıradaki story'yi öner (kritik yol önceliği).
+Without an argument, suggest the next story in the current sprint (critical path first).
 
-Story dosyasını oku. **Hazırlık kontrolü** (agent çağırmadan):
+Read the story file. **Readiness check** (no agent):
 
 ```
-[ ] Durum "Hazır" mı? (Bloke ise nedenini göster ve dur)
-[ ] Kabul kriterleri var mı ve Given/When/Then formatında mı?
-[ ] "Uygulanacak mimari kararlar" bölümü dolu mu (veya "N/A — <neden>")?
-[ ] "Sözleşme" bölümü dolu mu (API/tablo gerektiren tipler için)?
-[ ] "Dokunulacak dosyalar" listesi var mı?
-[ ] "Test senaryoları" bölümü dolu mu (Logic/Integration için)?
-[ ] Bağımlı story'ler DONE mı?
+[ ] Is the status "Ready"? (if Blocked, show why and stop)
+[ ] Are the acceptance criteria present and in Given/When/Then form?
+[ ] Is "Architecture decisions to apply" filled in (or "N/A — <reason>")?
+[ ] Is the "Contract" section filled in (for types that need it)?
+[ ] Is there a "Files to touch" list?
+[ ] Is "Test scenarios" filled in (for Logic/Integration)?
+[ ] Are the stories it depends on DONE?
 ```
 
-Eksik varsa **dur**:
+If anything is missing, **stop**:
 ```
-⚠ Story hazır değil: <eksik maddeler>
-Düzeltme: /stories <epic> tekrar çalıştır veya story'yi elle tamamla.
-Yine de devam etmek istersen geliştirici agent ek dosya okumak zorunda kalacak
-(daha yüksek token maliyeti ve hata riski).
+⚠ Story not ready: <missing items>
+Fix: re-run /stories <epic> or complete the story manually.
+If you continue anyway, the developer agent will have to read extra files
+(higher token cost and higher error risk).
 ```
-`AskUserQuestion` ile: `Story'yi düzelt (Önerilen)` / `Yine de devam et`
+`AskUserQuestion`: `Fix the story (Recommended)` / `Continue anyway`
 
-Bağımlı story DONE değilse **kesinlikle dur** — sırayı bozma.
+If a dependency is not DONE, **stop unconditionally** — do not break the ordering.
 
-## 2. Doğru agent'ı seç
+## 2. Select the right agent
 
-Story'nin `Sahip` alanı belirler. Eşleşme yoksa tipten türet:
+The story's `Owner` field decides. If there is no match, derive it from the type:
 
-| Tip / içerik | Agent |
+| Type / content | Agent |
 |---|---|
-| UI, ekran, komponent | `frontend-developer` |
-| Logic/Integration, endpoint, iş kuralı | `backend-developer` |
-| Data, şema, migration, index | `sql-developer` |
-| Infra, pipeline, ortam | `devops-engineer` |
-| ETL, rapor, event | `data-engineer` |
-| Test otomasyonu | `test-engineer` |
+| UI, screen, component | `frontend-developer` |
+| Logic/Integration, endpoint, business rule | `backend-developer` |
+| Data, schema, migration, index | `sql-developer` |
+| Infra, pipeline, environment | `devops-engineer` |
+| ETL, report, event | `data-engineer` |
+| Test automation | `test-engineer` |
 
-## 3. Geliştirici agent'ı çağır
+## 3. Invoke the developer agent
 
-**Story dosyasının TAMAMINI prompt'a göm.** Dosya yolu verip okutma —
-görev paketi zaten kendi kendine yeterli olacak şekilde yazıldı.
-
-```
-<STORY DOSYASININ TAM İÇERİĞİ>
-
-Ek bağlam:
-- Proje yığını: <stack özeti>
-- Uygulanacak kod kuralları: .claude/rules/<ilgili>.md
-  <ilgili kural dosyasının içeriği de gömülür — 40 satırlık bir dosya>
-
-Görev: Bu story'yi implement et.
-
-1. Kabul kriterlerini kontrol listesine çevir
-2. "Dokunulacak dosyalar" listesindeki dosyalarla çalış.
-   Liste eksikse Grep ile hedefli ara — dizin taraması YAPMA.
-3. Benzer mevcut kod varsa genişlet, kopyalayıp yapıştırma
-4. "Test senaryoları" bölümündeki TC'lere karşı test yaz.
-   Sıfırdan test icat etme.
-5. Testleri ÇALIŞTIR ve çıktıyı gör. "Geçmesi gerekir" deme.
-6. "Kapsam DIŞI" bölümündeki işleri YAPMA.
-
-Çıktı formatı:
-VERDİKT: TAMAMLANDI | BLOKE
-ÖZET: <3 cümle>
-DOSYALAR: <yollar>
-TESTLER: <komut> → <geçen/toplam>
-KABUL KRİTERLERİ: AC-1 ✓ | AC-2 ✓ | AC-3 ✗ <neden>
-NOT: <kapsam dışı gözlemler — DÜZELTME, sadece raporla>
-SONRAKİ ADIM: <tek satır>
-```
-
-`BLOKE` dönerse: nedeni sınıflandır, ilgili role escalate et
-(`.claude/docs/coordination-rules.md` §3), kullanıcıya bildir, dur.
-
-## 4. Kod incelemesi (lean+ mod)
-
-`code-reviewer` çağır:
+**Embed the ENTIRE story file in the prompt.** Do not give a path and have it read the
+file — the task packet was written to be self-sufficient.
 
 ```
-<DEĞİŞEN DOSYALARIN İÇERİĞİ veya git diff>
-<STORY'NİN kabul kriterleri + iş kuralları + kapsam dışı bölümü>
-<İLGİLİ .claude/rules/*.md içeriği>
+<THE FULL CONTENT OF THE STORY FILE>
 
-Görev: CR-CODE kapısı. İnceleme sırası: doğruluk → güvenlik → kapsam sadakati
-→ kural uyumu → okunabilirlik → test kalitesi.
+Additional context:
+- Project stack: <stack summary>
+- Coding rules to apply: .claude/rules/<relevant>.md
+  <the content of the relevant rules file is also embedded — about 40 lines>
 
-Her bulgu: [BLOKE|ÖNEMLİ|ÖNERİ|NOT] <dosya:satır> — <tek cümle iddia + neden>
-En fazla 15 bulgu. Stil tercihi yazma.
-Yanıtına "CR-CODE: ONAY|ŞARTLI|RET" satırıyla başla.
+Task: implement this story.
+
+1. Turn the acceptance criteria into a checklist
+2. Work with the files in the "Files to touch" list.
+   If the list is incomplete, search with targeted Grep — do NOT scan directories.
+3. If similar code exists, extend it rather than copy-pasting
+4. Write tests against the TCs in the "Test scenarios" section.
+   Do not invent tests from scratch.
+5. RUN the tests and look at the output. Never say "it should pass".
+6. Do NOT do the work listed under "Out of scope".
+
+Output format:
+VERDICT: COMPLETE | BLOCKED
+SUMMARY: <3 sentences>
+FILES: <paths>
+TESTS: <command> → <passed/total>
+ACCEPTANCE CRITERIA: AC-1 ✓ | AC-2 ✓ | AC-3 ✗ <why>
+NOTE: <out-of-scope observations — do NOT fix, just report>
+NEXT STEP: <one line>
 ```
 
-| Verdikt | Aksiyon |
+If it returns `BLOCKED`: classify the cause, escalate to the right role
+(`.claude/docs/coordination-rules.md` §3), inform the user, stop.
+
+## 4. Code review (lean+ mode)
+
+Invoke `code-reviewer`:
+
+```
+<CONTENT OF THE CHANGED FILES or the git diff>
+<THE STORY'S acceptance criteria + business rules + out-of-scope section>
+<CONTENT OF THE RELEVANT .claude/rules/*.md>
+
+Task: the CR-CODE gate. Review order: correctness → security → scope fidelity
+→ rule compliance → readability → test quality.
+
+Each finding: [BLOCKER|MAJOR|MINOR|NOTE] <file:line> — <one-sentence claim + reason>
+At most 15 findings. Do not write style preferences.
+Begin your reply with "CR-CODE: APPROVED|CONDITIONAL|REJECTED".
+```
+
+| Verdict | Action |
 |---|---|
-| `ONAY` | Adım 5'e geç |
-| `ŞARTLI` | ÖNEMLİ bulguları geliştiriciye **tek turda** gönder, düzelttir, kapıyı tekrar çağırma |
-| `RET` | BLOKE bulguları geliştiriciye gönder, düzelttir, **kapıyı bir kez daha çağır** |
+| `APPROVED` | Go to step 5 |
+| `CONDITIONAL` | Send the MAJOR findings to the developer **in one round**, have them fixed, do not re-invoke the gate |
+| `REJECTED` | Send the BLOCKER findings to the developer, have them fixed, **invoke the gate once more** |
 
-`solo` modda bu adımı atla.
+Skip this step in `solo` mode.
 
-## 5. Story'yi güncelle
+## 5. Update the story
 
-- Kabul kriteri checkbox'larını işaretle
-- `**Durum:**` → `İncelemede` (DoD henüz geçilmedi)
-- `## Zorunlu kanıt` bölümüne test dosyası yolu ve sonucu yaz
-- `**Güncellenme:**` tarihi
+- Tick the acceptance-criteria checkboxes
+- `**Status:**` → `In review` (the DoD has not been passed yet)
+- Write the test file path and result into the `## Required evidence` section
+- Update the `**Updated:**` date
 
-## 6. Sun
+## 6. Present
 
 ```
-✓ Story <NNN>: <başlık>
-  Sahip: <agent> | Tip: <tip>
+✓ Story <NNN>: <title>
+  Owner: <agent> | Type: <type>
 
-Dosyalar: <N> değişti, <M> yeni
-Testler: <geçen>/<toplam> ✓
-Kabul kriterleri: <X>/<Y> ✓
-Kod incelemesi: CR-CODE <verdikt> (<a> bulgu düzeltildi)
+Files: <N> changed, <M> new
+Tests: <passed>/<total> ✓
+Acceptance criteria: <X>/<Y> ✓
+Code review: CR-CODE <verdict> (<a> findings fixed)
 
-NOT (kapsam dışı gözlemler):
-- <geliştiricinin raporladığı>
+NOTE (out-of-scope observations):
+- <what the developer reported>
 
-▶ Sonraki: /dod-check <story-yolu>
-   veya doğrudan sıradaki story: /dev-task <yol>
+▶ Next: /dod-check <story-path>
+   or straight to the next story: /dev-task <path>
 ```
 
-Kapsam dışı gözlemler varsa kullanıcıya sor: bunlar backlog'a story olarak
-eklensin mi?
+If there are out-of-scope observations, ask the user whether they should be added to the
+backlog as stories.
 
 ---
 
-## Token notu — bu skill neden ucuz olmalı
+## Token note — why this skill should be cheap
 
-- **1-2 agent çağrısı** (geliştirici + [lean+: inceleyici]).
-- Geliştirici agent **hiçbir dokümantasyon dosyası okumaz** — hepsi story'de gömülü.
-- Kural dosyası da gömülür (40 satır, prompt cache dostu, sabit).
-- Hazırlık kontrolü bedava ve **geri dönüşleri önler** — en büyük tasarruf budur.
-- Bir story'de 3'ten fazla tur olursa bu bir görev paketi kalitesi sorunudur;
-  `delivery-manager`'a raporla, aynı hatayı bir sonraki `/stories` çağrısında düzelt.
+- **1-2 agent calls** (developer + [lean+: reviewer]).
+- The developer agent **reads no documentation files** — everything is embedded in the story.
+- The rules file is embedded too (40 lines, fixed content, prompt-cache friendly).
+- The readiness check is free and **prevents round-trips** — that is the biggest saving.
+- If a story takes more than 3 rounds, that is a task-packet quality problem; report it
+  to `delivery-manager` and fix the same mistake in the next `/stories` run.

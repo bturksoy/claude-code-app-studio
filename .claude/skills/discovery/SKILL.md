@@ -1,171 +1,172 @@
 ---
 name: discovery
-description: Product Owner ve Business Analyst'i paralel çalıştırıp projeyi detaylandırır. İki farklı mercekten bakar, anlaşma ve çelişkileri ayırır, çelişkileri kullanıcıya karar olarak sunar. PRD öncesi zorunlu adım.
+description: Runs the Product Owner and Business Analyst in parallel to flesh out the project. Looks through two different lenses, separates agreement from contradiction, and presents contradictions to the user as decisions. A mandatory step before the PRD.
 ---
 
 # /discovery
 
-Faz 1'in ilk adımı. **PO ve BA'nın kafa kafaya verdiği** yer.
-Çıktı: `product/discovery.md` + netleşmiş kapsam + açık soru listesi.
+The first step of Phase 1 — where the **PO and BA put their heads together**.
+Output: `product/discovery.md` plus a clarified scope and an open-questions list.
 
-Ön koşul: `product/00-brief.md` mevcut olmalı. Yoksa `/kickoff` öner ve dur.
+Prerequisite: `product/00-brief.md` must exist. If not, suggest `/kickoff` and stop.
 
 ---
 
-## 1. Girdiyi hazırla
+## 1. Prepare the input
 
-`product/00-brief.md` oku. Şu **bağlam bloğunu** oluştur (her iki agent'a birebir
-aynısı gidecek — dosya okutma, içeriği göm):
-
-```
-PROJE: <ad> — <tek cümle>
-HEDEFLER: GOAL-01 <...> | GOAL-02 <...>
-KULLANICI: <persona özeti>
-KISIT: <kritik kısıt>
-MVP DIŞI: <liste>
-RİSKLİ VARSAYIMLAR: <liste>
-```
-
-## 2. Paralel round-table (tek mesajda iki Agent çağrısı)
-
-İki agent **aynı bağlamı, farklı mercekle** alır ve **birbirini görmez**.
-Bu kasıtlıdır — grup düşüncesini engeller.
-
-### Çağrı A — `product-owner`
+Read `product/00-brief.md`. Build this **context block** (both agents receive an
+identical copy — do not have them read files, embed the content):
 
 ```
-<BAĞLAM BLOĞU>
-
-Mercek: DEĞER ve ÖNCELİK.
-
-Üret:
-1. Problem tanımı — kimin, hangi durumda, ne acısı. Kanıt mı varsayım mı işaretle.
-2. En fazla 3 persona: rol, hedef, bugün nasıl çözüyor, neden yetersiz.
-3. Yetenek listesi (capability): kullanıcının yapabilmesi gereken şeyler.
-   Her biri MoSCoW ile: Olmalı / Olmalıydı / Olabilir / Olmayacak.
-   Her "Olmalı" bir GOAL'a bağlanmalı — bağlanmıyorsa "Olmayacak"a taşı.
-4. En küçük kullanılabilir ürün: hangi 3-5 yetenek olmadan bu ürün anlamsız?
-5. Rakip/alternatif: kullanıcı bugün ne kullanıyor, biz neden daha iyiyiz.
-6. Ölçüm: her GOAL için ürün içinde hangi olay ölçülecek.
-
-Kısa ve maddeli yaz. Belirsizlik varsa "SORU:" satırı aç, varsayım yapma.
+PROJECT: <name> — <one sentence>
+GOALS: GOAL-01 <...> | GOAL-02 <...>
+USER: <persona summary>
+CONSTRAINT: <critical constraint>
+NOT IN MVP: <list>
+RISKY ASSUMPTIONS: <list>
 ```
 
-### Çağrı B — `business-analyst`
+## 2. Parallel round-table (two Agent calls in one message)
+
+The two agents receive **the same context through different lenses** and **cannot see
+each other**. This is deliberate — it prevents groupthink.
+
+### Call A — `product-owner`
 
 ```
-<BAĞLAM BLOĞU>
+<CONTEXT BLOCK>
 
-Mercek: EKSİKLİK, ÇELİŞKİ ve BELİRSİZLİK.
+Lens: VALUE and PRIORITY.
 
-Üret:
-1. Bu tanımdan iki farklı sistem yazılabilir mi? Nerede? (belirsizlik listesi)
-2. Aktörler ve yetkiler: kim var, kim neyi yapabilir, kim yapamaz.
-3. Ana iş süreçleri: uçtan uca akışlar (Mermaid). Her karar noktasını işaretle.
-4. Veri kavramları: hangi varlıklar var, aralarındaki ilişki, sahiplik.
-   Aynı kavrama iki isim veriliyorsa yakala.
-5. Sorulmamış sorular — en az 10 madde. Örnek kategoriler:
-   yetki/rol, çoklu kullanıcı, eşzamanlılık, silme/arşivleme, geçmiş veri,
-   bildirim, çevrimdışı, para birimi/vergi/yerelleştirme, dosya/ek,
-   dış sistem entegrasyonu, denetim izi, veri saklama süresi.
-6. Kaçırılan sınır durumları: boş, çok fazla, eşzamanlı, geri alma, hata.
+Produce:
+1. Problem statement — whose pain, in what situation, what it costs them.
+   Mark each claim as evidence or assumption.
+2. At most 3 personas: role, goal, how they solve it today, why that is inadequate.
+3. Capability list: things the user must be able to do.
+   Each with MoSCoW: Must / Should / Could / Won't.
+   Every "Must" must map to a GOAL — if it cannot, move it to "Won't".
+4. Minimum usable product: which 3-5 capabilities, without which this product is pointless?
+5. Competition/alternatives: what does the user use today, why are we better?
+6. Measurement: for each GOAL, which in-product event will be measured.
 
-Kısa ve maddeli yaz. Karar verme — belirsizliği görünür kıl.
+Write short and in bullets. If something is unclear, open a "QUESTION:" line; do not assume.
 ```
 
-## 3. Sentez (sen yaparsın, agent çağırma)
+### Call B — `business-analyst`
 
-İki çıktıyı karşılaştır ve üç kovaya ayır:
-
-**ANLAŞMA** — ikisinin de aynı şekilde gördüğü. Doğrudan dokümana gider.
-
-**ÇELİŞKİ** — biri X der, diğeri Y ima eder. Her çelişki için:
 ```
-Ç-N: <konu>
-  PO görüşü: <...>
-  BA görüşü / ima ettiği: <...>
-  Neden önemli: <hangi kararı etkiler>
-  Seçenekler: A) <...>  B) <...>
+<CONTEXT BLOCK>
+
+Lens: GAPS, CONTRADICTIONS and AMBIGUITY.
+
+Produce:
+1. Could two different systems be built from this definition? Where? (ambiguity list)
+2. Actors and permissions: who exists, who can do what, who cannot.
+3. Main business processes: end-to-end flows (Mermaid). Mark every decision point.
+4. Data concepts: which entities exist, their relationships, ownership.
+   Catch any concept that has been given two names.
+5. Unasked questions — at least 10. Example categories:
+   permissions/roles, multi-user, concurrency, deletion/archiving, historical data,
+   notifications, offline, currency/tax/localization, files/attachments,
+   external system integration, audit trail, data retention.
+6. Missed edge cases: empty, too many, concurrent, undo, failure.
+
+Write short and in bullets. Do not decide — make the ambiguity visible.
 ```
 
-**AÇIK SORU** — ikisinin de cevabını bilmediği, kullanıcıdan gelmesi gereken bilgi.
-Bloke edici olanları işaretle (bunlar cevaplanmadan `/requirements` çalışamaz).
+## 3. Synthesis (you do this — invoke no agents)
 
-## 4. Kullanıcıya sun
+Compare the two outputs and sort into three buckets:
 
-Önce sentezi metin olarak yaz (yukarıdaki üç başlık).
+**AGREEMENT** — what both saw the same way. Goes straight into the document.
 
-Sonra `AskUserQuestion` ile **kararları topla**. Kurallar:
-- Tek çağrıda en fazla 4 soru
-- Önce **bloke edici** çelişkiler, sonra açık sorular
-- Her seçeneğin tek cümlelik sonucu yazılı
-- Önerilen seçenek ilk sırada, etiketinde "(Önerilen)"
-- 4'ten fazla varsa ikinci tur yap; ama toplamda 8 soruyu geçme —
-  gerisi `/requirements` sırasında sorulur
+**CONTRADICTION** — one says X, the other implies Y. For each:
+```
+C-N: <topic>
+  PO view: <...>
+  BA view / implication: <...>
+  Why it matters: <which decision it affects>
+  Options: A) <...>  B) <...>
+```
 
-## 5. Dosyaya yaz
+**OPEN QUESTION** — what neither knows; information that must come from the user.
+Mark the blocking ones (these must be answered before `/requirements` can run).
 
-Onay sonrası `product/discovery.md`:
+## 4. Present to the user
+
+First write the synthesis in prose (the three headings above).
+
+Then collect **decisions** via `AskUserQuestion`. Rules:
+- At most 4 questions per call
+- Blocking contradictions first, then open questions
+- Each option states its consequence in one sentence
+- The recommended option comes first, labelled "(Recommended)"
+- If there are more than 4, do a second round; but never exceed 8 in total —
+  the rest are asked during `/requirements`
+
+## 5. Write the file
+
+After approval, `product/discovery.md`:
 
 ```markdown
-# Keşif — <proje>
-**Tarih:** <bugün> | **Katılımcılar:** product-owner, business-analyst
+# Discovery — <project>
+**Date:** <today> | **Participants:** product-owner, business-analyst
 
 ## Problem
-<mutabık kalınan tanım> (kanıt: <var/varsayım>)
+<the agreed definition> (evidence: <yes/assumption>)
 
-## Personalar
-### <ad> — <rol>
-Hedef: | Bugün nasıl çözüyor: | Acı noktası: | Başarı:
+## Personas
+### <name> — <role>
+Goal: | How they solve it today: | Pain point: | Success:
 
-## Yetenekler (MoSCoW)
-| # | Yetenek | Öncelik | GOAL | Not |
+## Capabilities (MoSCoW)
+| # | Capability | Priority | GOAL | Note |
 
-## En küçük kullanılabilir ürün
-<3-5 yetenek>
+## Minimum usable product
+<3-5 capabilities>
 
-## Aktörler ve yetkiler
-| Aktör | Yapabilir | Yapamaz |
+## Actors and permissions
+| Actor | Can | Cannot |
 
-## Ana süreçler
-<Mermaid akışlar>
+## Main processes
+<Mermaid flows>
 
-## Veri kavramları
-| Kavram | Tanım | İlişkili | Sahibi |
+## Data concepts
+| Concept | Definition | Related to | Owner |
 
-## Alınan kararlar
-| # | Konu | Seçenekler | Karar | Gerekçe |
+## Decisions made
+| # | Topic | Options | Decision | Rationale |
 
-## Açık sorular
-| # | Soru | Bloke eder mi | Sahip | Durum |
+## Open questions
+| # | Question | Blocking? | Owner | Status |
 
-## Kapsam dışı (bu turda netleşen)
-- <madde> — <neden>
+## Out of scope (clarified this round)
+- <item> — <why>
 ```
 
-Ayrıca:
-- Alınan kararları `docs/DECISIONS.md`'ye tek satır olarak ekle
-- `docs/CONTEXT.md`'nin "Ne inşa ediyoruz" ve "Kapsam dışı" bölümlerini güncelle
-- `.state/project.json` → `phase: "discovery"` (değişmez, sonraki adım PRD)
+Also:
+- Append the decisions to `docs/DECISIONS.md` as single lines
+- Update the "What we are building" and "Deliberately out of scope" sections of `docs/CONTEXT.md`
+- `.state/project.json` → `phase: "discovery"` (unchanged; the next step is the PRD)
 
-## 6. Kapat
+## 6. Close
 
 ```
-✓ Keşif tamamlandı.
-  <N> yetenek | <M> karar alındı | <K> açık soru (<B> bloke edici)
+✓ Discovery complete.
+  <N> capabilities | <M> decisions made | <K> open questions (<B> blocking)
 
-<bloke edici varsa:>
-⚠ Şu sorular cevaplanmadan gereksinim yazılamaz:
-  - <soru>
+<if blocking:>
+⚠ Requirements cannot be written until these are answered:
+  - <question>
 
-▶ Sonraki: /prd
+▶ Next: /prd
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **2 agent çağrısı** (paralel, tek mesaj). İkinci tur yok.
-- Sentezi model yapar, agent'a yaptırma.
-- Bağlam bloğu ≤ 40 satır. Brief'in tamamını gömme.
-- Kullanıcı sorularını toplu sor; her soru için ayrı tur açma.
+- **2 agent calls** (parallel, single message). No second round.
+- The synthesis is done by the model, not delegated to an agent.
+- The context block is ≤ 40 lines. Do not embed the entire brief.
+- Ask user questions in batches; never open a round per question.

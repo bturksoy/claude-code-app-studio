@@ -1,4 +1,4 @@
-# Secrets — asla versiyonlanmaz
+# Secrets — never versioned
 .env
 .env.*
 !.env.example
@@ -9,7 +9,7 @@
 secrets/
 **/secrets/
 
-# Bağımlılıklar
+# Dependencies
 node_modules/
 venv/
 .venv/
@@ -20,7 +20,7 @@ obj/
 target/
 vendor/
 
-# Build çıktıları
+# Build output
 dist/
 build/
 out/
@@ -36,5 +36,6 @@ coverage/
 .DS_Store
 Thumbs.db
 
-# App Studio — üretilen durum (isteğe bağlı: takım çalışmasında versiyonlanabilir)
+# App Studio — generated local telemetry
+# Remove this line if you want to aggregate token stats across machines.
 .state/agent-log.jsonl

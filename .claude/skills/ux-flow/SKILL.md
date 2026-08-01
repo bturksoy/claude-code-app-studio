@@ -1,107 +1,108 @@
 ---
 name: ux-flow
-description: Kullanıcı akışlarını, bilgi mimarisini ve wireframe spesifikasyonlarını üretir. Gereksinimleri ekran ve etkileşim diline çevirir. UX-FLOW kapısını işletir.
+description: Produces user flows, information architecture and wireframe specifications. Translates requirements into the language of screens and interactions. Operates the UX-FLOW gate.
 ---
 
-# /ux-flow [kapsam]
+# /ux-flow [scope]
 
-Sahip: `ux-designer`. Çıktı: `docs/design/ux/` altındaki dosyalar.
+Owner: `ux-designer`. Outputs: files under `docs/design/ux/`.
 
-Ön koşul: `product/requirements/FRD.md`. Kapsam verilmezse mevcut faz REQ'leri.
+Prerequisite: `product/requirements/FRD.md`. Without a scope, use the current phase's REQs.
 
 ---
 
-## 1. Girdi
+## 1. Input
 
-Bağlam bloğu:
-- Personalar (`product/discovery.md` veya `PRD.md`'den)
-- REQ listesi: ID, başlık, aktör, davranış özeti, **kabul kriterleri**
-  (kabul kriterleri ekran davranışını belirler, tam gömülür)
-- Kullanılabilirlik ile ilgili NFR'ler
-- Platform bilgisi (web/mobil, hedef cihaz)
+Context block:
+- Personas (from `product/discovery.md` or `PRD.md`)
+- REQ list: id, title, actor, behaviour summary, **acceptance criteria**
+  (the criteria determine screen behaviour — embed them in full)
+- Usability-related NFRs
+- Platform information (web/mobile, target devices)
 
-## 2. `ux-designer` çağır
-
-```
-<BAĞLAM BLOĞU>
-
-Görev: UX tasarımını üret.
-
-1. Bilgi mimarisi — bölümler, hiyerarşi, navigasyon modeli (Mermaid)
-   İsimlendirme kullanıcı dilinde olmalı, sistem dilinde değil.
-2. Kritik akışlar (en fazla 6) — her biri için:
-   mutlu yol adımları, alternatif yollar, hata durumları,
-   kullanılabilirlik kriterleri (adım sayısı hedefi, geri dönülebilirlik)
-3. Ekran envanteri — akışlardan TÜRET, hayali ekran yazma:
-   | Ekran | Rota | Amaç | Karşıladığı REQ | Öncelik |
-4. Her ekran için wireframe spesifikasyonu (metin, görsel değil):
-   yerleşim, durumlar (boş/yükleniyor/hata/yetkisiz), etkileşimler,
-   erişilebilirlik (klavye sırası, odak yönetimi, ekran okuyucu),
-   duyarlılık (mobil/tablet/masaüstü farkları)
-5. REQ kapsama tablosu: her REQ hangi ekran(lar)da karşılanıyor
-   Karşılanmayan REQ varsa AÇIKÇA listele.
-
-Kurallar:
-- Adım sayısını azalt, ekran sayısını değil
-- Her ekranın boş durumu tanımlı olmalı
-- Hata mesajı ne yapılacağını söylemeli — "Bir hata oluştu" yasak
-- Erişilebilirlik sonradan eklenmez, spesifikasyonun parçası
-- Renk/font/boşluk seçme — o ui-designer'ın işi
-
-Önce ekran envanterini ver, sonra wireframe detaylarını.
-Yanıtına "UX-FLOW: ONAY|ŞARTLI|RET" satırıyla başla (kendi çıktını değerlendir:
-her REQ karşılandı mı, her ekranın 4 durumu var mı).
-```
-
-## 3. Ekran sayısı kontrolü
-
-Ekran sayısı 12'yi aşıyorsa kullanıcıya sor:
-
-> "<N> ekran çıktı. Hepsinin wireframe'ini şimdi mi yazalım, yoksa önce
-> Faz 1'deki <M> ekranı mı?"
-
-Wireframe spesifikasyonları uzundur — faz bazlı yazmak ciddi tasarruf sağlar.
-
-## 4. Sun
+## 2. Invoke `ux-designer`
 
 ```
-## UX Tasarımı
-Bilgi mimarisi: <N> bölüm
-Akışlar: <M> kritik akış
-Ekranlar: <K>
+<CONTEXT BLOCK>
 
-| Ekran | Rota | REQ | Öncelik |
+Task: produce the UX design.
 
-REQ kapsaması: <X>/<Y>
-⚠ Karşılanmayan: <liste>
-⚠ Ekransız REQ (arka plan işi olabilir): <liste>
+1. Information architecture — sections, hierarchy, navigation model (Mermaid)
+   Naming must be in the user's language, not the system's.
+2. Critical flows (at most 6) — for each:
+   happy path steps, alternative paths, error cases,
+   usability criteria (step-count target, reversibility)
+3. Screen inventory — DERIVE it from the flows; do not invent screens:
+   | Screen | Route | Purpose | REQs satisfied | Priority |
+4. A wireframe specification per screen (text, not visuals):
+   layout, states (empty/loading/error/unauthorized), interactions,
+   accessibility (tab order, focus management, screen reader),
+   responsiveness (mobile/tablet/desktop differences)
+5. REQ coverage table: which screen(s) satisfy each REQ
+   EXPLICITLY list any REQ that is not covered.
 
-Kapı: UX-FLOW <verdikt>
+Rules:
+- Reduce step count, not screen count
+- Every screen must define its empty state
+- An error message must say what to do — "An error occurred" is forbidden
+- Accessibility is not bolted on; it is part of the specification
+- Do not choose colours/fonts — that is the ui-designer's job
+
+Give the screen inventory first, then the wireframe details.
+Begin your reply with "UX-FLOW: APPROVED|CONDITIONAL|REJECTED" (evaluate your own
+output: is every REQ covered, does every screen have its 4 states).
 ```
 
-## 5. Yaz
+## 3. Screen count check
 
-- `docs/design/ux/personas.md` (yoksa)
+If the screen count exceeds 12, ask the user:
+
+> "That produced <N> screens. Should we write wireframes for all of them, or start
+> with the <M> screens in Phase 1?"
+
+Wireframe specifications are long — writing them per phase saves substantially.
+
+## 4. Present
+
+```
+## UX Design
+Information architecture: <N> sections
+Flows: <M> critical flows
+Screens: <K>
+
+| Screen | Route | REQ | Priority |
+
+REQ coverage: <X>/<Y>
+⚠ Not covered: <list>
+⚠ REQs without a screen (may be background work): <list>
+
+Gate: UX-FLOW <verdict>
+```
+
+## 5. Write
+
+- `docs/design/ux/personas.md` (if missing)
 - `docs/design/ux/information-architecture.md`
-- `docs/design/ux/flows/<akış>.md`
-- `docs/design/ux/wireframes/<ekran>.md`
+- `docs/design/ux/flows/<flow>.md`
+- `docs/design/ux/wireframes/<screen>.md`
 - `.state/gates.jsonl`
 
-## 6. Kapat
+## 6. Close
 
 ```
-✓ UX tasarımı → docs/design/ux/
-  <M> akış | <K> ekran | REQ kapsaması <X>/<Y>
+✓ UX design → docs/design/ux/
+  <M> flows | <K> screens | REQ coverage <X>/<Y>
 
-▶ Sonraki: /design-system
-   UI Designer bu ekranların kullanacağı token ve komponentleri tanımlayacak.
+▶ Next: /design-system
+   The UI Designer will define the tokens and components these screens will use.
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **1 agent çağrısı.** Kapı verdikti aynı çağrıda alınır.
-- Kabul kriterleri tam gömülür (ekran davranışını belirler); REQ gövdesi gömülmez.
-- Faz bazlı wireframe yazımı en büyük tasarruf.
-- Wireframe'leri ekrana basma — dosyaya yaz, envanter tablosu göster.
+- **1 agent call.** The gate verdict comes from the same call.
+- Acceptance criteria are embedded in full (they determine screen behaviour);
+  the REQ body is not.
+- Writing wireframes per phase is the biggest saving.
+- Never print wireframes on screen — write the files, show the inventory table.

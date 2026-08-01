@@ -1,96 +1,97 @@
-# Veritabanı Kuralları
+# Database Rules
 
-**Kapsam:** `db/**`, `**/migrations/**`, `**/*.sql`, `**/entities/**`, `**/models/**`
+**Scope:** `db/**`, `**/migrations/**`, `**/*.sql`, `**/entities/**`, `**/models/**`
 
 ---
 
-## İsimlendirme
+## Naming
 
-| Nesne | Kural | Örnek |
+| Object | Convention | Example |
 |---|---|---|
-| Tablo | çoğul, snake_case | `order_items` |
-| Sütun | tekil, snake_case | `unit_price` |
-| Birincil anahtar | `id` | `id` |
-| Yabancı anahtar | `<tekil>_id` | `order_id` |
-| Index | `ix_<tablo>_<sütunlar>` | `ix_orders_customer_id_created_at` |
-| Benzersiz | `uq_<tablo>_<sütunlar>` | `uq_users_email` |
-| Kontrol | `ck_<tablo>_<kural>` | `ck_orders_total_positive` |
-| Yabancı anahtar kısıtı | `fk_<tablo>_<hedef>` | `fk_order_items_order` |
-| Migration | `NNNN_<snake_ad>.sql` | `0012_add_user_roles.sql` |
+| Table | plural, snake_case | `order_items` |
+| Column | singular, snake_case | `unit_price` |
+| Primary key | `id` | `id` |
+| Foreign key | `<singular>_id` | `order_id` |
+| Index | `ix_<table>_<columns>` | `ix_orders_customer_id_created_at` |
+| Unique | `uq_<table>_<columns>` | `uq_users_email` |
+| Check | `ck_<table>_<rule>` | `ck_orders_total_positive` |
+| Foreign key constraint | `fk_<table>_<target>` | `fk_order_items_order` |
+| Migration | `NNNN_<snake_name>.sql` | `0012_add_user_roles.sql` |
 
-Kısaltma kullanma (`usr`, `ord` yasak). Rezerve kelime kullanma.
+No abbreviations (`usr`, `ord` are forbidden). No reserved words.
 
-## Zorunlu sütunlar
+## Mandatory columns
 
-Her tabloda:
+On every table:
 ```sql
 id           <uuid|bigint>  PRIMARY KEY
 created_at   timestamptz    NOT NULL DEFAULT now()
 updated_at   timestamptz    NOT NULL DEFAULT now()
 ```
-Soft delete kullanılıyorsa `deleted_at timestamptz NULL` + kısmi index.
+If soft delete is used: `deleted_at timestamptz NULL` + a partial index.
 
-## Kısıtlar
+## Constraints
 
-**Kısıt > uygulama kodu.** Veritabanı bozuk veri kabul etmemeli.
+**Constraints > application code.** The database must not accept corrupt data.
 
-- `NOT NULL` varsayılan; nullable olması gerekçe ister
-- Her yabancı anahtar `ON DELETE` davranışıyla tanımlı (`RESTRICT` varsayılan)
-- İş anahtarları `UNIQUE` kısıtla korunur
-- Değer aralıkları `CHECK` ile korunur (`ck_orders_total_positive`)
-- Enum: az değişen ve kodda bilinen → DB enum/CHECK; iş tarafından yönetilen → referans tablosu
+- `NOT NULL` by default; nullability requires justification
+- Every foreign key defines its `ON DELETE` behaviour (`RESTRICT` by default)
+- Business keys are protected by `UNIQUE` constraints
+- Value ranges are protected by `CHECK` (`ck_orders_total_positive`)
+- Enums: rarely changing and known to code → DB enum/CHECK; managed by the business →
+  reference table
 
-## Tipler
+## Types
 
-- Para: `numeric(precision, scale)` veya minor-unit `bigint` — `float`/`real` **yasak**
-- Zaman: `timestamptz` (UTC). `timestamp` (tz'siz) yasak
-- Metin: `text` + `CHECK (length(...))` — keyfi `varchar(255)` yerine gerçek sınır
-- Boolean: `boolean`, nullable değil (varsayılan ver)
-- JSON: `jsonb`; ama sorgulanacak alan JSON'da yaşamaz, sütun olur
+- Money: `numeric(precision, scale)` or minor-unit `bigint` — `float`/`real` **forbidden**
+- Time: `timestamptz` (UTC). Naive `timestamp` is forbidden
+- Text: `text` + `CHECK (length(...))` — a real limit instead of an arbitrary `varchar(255)`
+- Boolean: `boolean`, not nullable (give it a default)
+- JSON: `jsonb`; but any field that will be queried becomes a column, not a JSON key
 
-## Index
+## Indexes
 
-Her index bir sorguya bağlı ve gerekçesi yazılı:
+Every index is tied to a query and its rationale is written down:
 
 ```sql
--- Sorgu: müşteriye göre siparişler, tarih sıralı (REQ-ORD-004)
--- Öncesi: Seq Scan 340ms → Sonrası: Index Scan 12ms
+-- Query: orders by customer, sorted by date (REQ-ORD-004)
+-- Before: Seq Scan 340ms → After: Index Scan 12ms
 CREATE INDEX CONCURRENTLY ix_orders_customer_id_created_at
   ON orders (customer_id, created_at DESC);
 ```
 
-- Yabancı anahtarlar index'lenir (silme ve join performansı)
-- Bileşik index'te sütun sırası: eşitlik → aralık → sıralama
-- Gereksiz index yazma maliyetidir; kullanılmayanları temizle
+- Foreign keys are indexed (delete and join performance)
+- Column order in a composite index: equality → range → sort
+- An unnecessary index is a write cost; remove unused ones
 
-## Migration
+## Migrations
 
-- Her migration `-- +up` ve `-- +down` bölümlerine sahip
-- **Uygulanmış migration düzenlenmez** — yeni migration yazılır
-- Şema değişikliği ve veri değişikliği **ayrı dosyalarda**
-- Çalışan sistemde güvenli sıra:
+- Every migration has `-- +up` and `-- +down` sections
+- **An applied migration is never edited** — write a new one
+- Schema changes and data changes go in **separate files**
+- Safe ordering on a live system:
   ```
-  1. Nullable sütun ekle
-  2. Veriyi doldur (ayrı migration)
-  3. NOT NULL kısıtı ekle
-  4. Eski sütunu kaldır (bir sonraki sürümde)
+  1. Add a nullable column
+  2. Backfill the data (separate migration)
+  3. Add the NOT NULL constraint
+  4. Drop the old column (in a later release)
   ```
-- Tek migration'da sütun yeniden adlandırma yapma — iki sürüme yay
-- Büyük tabloda `CREATE INDEX CONCURRENTLY`; `ALTER TABLE`'ın tablo yeniden yazıp
-  yazmadığını kontrol et
-- Migration DONE olmadan önce `up → down → up` test edilir
+- Never rename a column in a single migration — spread it across two releases
+- On large tables use `CREATE INDEX CONCURRENTLY`; check whether `ALTER TABLE` rewrites
+  the table
+- A migration is not DONE until `up → down → up` has been tested
 
-## Sorgu
+## Queries
 
-- `SELECT *` yasak — sütunları açıkça yaz
-- Sınırsız sonuç kümesi yasak — `LIMIT` zorunlu
-- İş mantığı SQL'de değil, domain katmanında (basit türetmeler hariç)
-- Trigger son çare; kullanılıyorsa ADR gerekir
-- Saklı yordam (stored procedure) ADR gerektirir
+- `SELECT *` is forbidden — list the columns explicitly
+- No unbounded result sets — `LIMIT` is mandatory
+- Business logic lives in the domain layer, not in SQL (simple derivations excepted)
+- Triggers are a last resort; using one requires an ADR
+- Stored procedures require an ADR
 
-## Yasaklar
+## Prohibitions
 
-- `DROP TABLE` / `DROP DATABASE` / `TRUNCATE` önermek veya çalıştırmak
-- Üretim veritabanında doğrudan `UPDATE`/`DELETE` (migration veya runbook üzerinden)
-- Kişisel veriyi index'te veya log'da açık tutmak
-- Kısıt olmadan "uygulama zaten kontrol ediyor" demek
+- Proposing or running `DROP TABLE` / `DROP DATABASE` / `TRUNCATE`
+- Direct `UPDATE`/`DELETE` against production (go through a migration or the runbook)
+- Keeping personal data unmasked in an index or a log
+- Saying "the application already checks it" instead of adding a constraint

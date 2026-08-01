@@ -1,119 +1,121 @@
 ---
 name: roadmap
-description: Projeyi bağımsız değer üreten fazlara böler, her faza kapsam ve çıkış kriteri atar, sürüm planını çıkarır. Fazlandırma adımı — hangi gereksinimin hangi sürümde olacağını belirler.
+description: Splits the project into phases that each deliver value independently, assigns scope and exit criteria to each, and produces the release plan. The phasing step — decides which requirement ships in which release.
 ---
 
 # /roadmap
 
-Sahip: `product-owner`, danışan: `delivery-manager`.
-Çıktı: `product/roadmap/ROADMAP.md` + `product/roadmap/phases/phase-N.md`
+Owner: `product-owner`, consulted: `delivery-manager`.
+Outputs: `product/roadmap/ROADMAP.md` + `product/roadmap/phases/phase-N.md`
 
-Ön koşul: `product/requirements/FRD.md`
+Prerequisite: `product/requirements/FRD.md`
 
 ---
 
-## 1. Girdi
+## 1. Input
 
-FRD'den **sadece REQ başlık tablosunu** çıkar (ID, başlık, öncelik, kaynak GOAL,
-bağımlılık). Tam gereksinim metinlerini gömme — bu adım için gereksiz.
+Extract **only the REQ heading table** from the FRD (id, title, priority, source GOAL,
+dependencies). Do not embed the full requirement text — it is unnecessary for this step.
 
-NFR'lerden sadece faz kararını etkileyenleri al (ölçek, güvenlik, uyumluluk).
+From the NFRs, take only those that affect phasing (scale, security, compliance).
 
-## 2. Fazlandırma ilkeleri (agent'a bunları ver)
+## 2. Phasing principles (give these to the agent)
 
-1. **Her faz tek başına yayınlanabilir ve değer üretir.** "Önce backend fazı"
-   bir faz değildir — kimse kullanamaz.
-2. **Faz 1 en riskli varsayımı test eder.** En kolay şeyi değil, en belirsiz şeyi öne al.
-3. **Faz büyüklüğü:** 1-3 sprint. Daha büyükse böl.
-4. **Bağımlılık yönü ileri.** Faz 2, Faz 1'i kullanabilir; tersi olamaz.
-5. **Her fazın çıkış kriteri ölçülebilir.** "Bitince" değil, "şu metrik şu değere ulaşınca".
-6. **Teknik temel işleri fazlara dağıtılır**, ayrı bir "altyapı fazı" açılmaz —
-   ama Faz 1 içinde "yürüyen iskelet" (walking skeleton) olmalıdır.
+1. **Every phase is independently shippable and delivers value.** "Backend phase first"
+   is not a phase — nobody can use it.
+2. **Phase 1 tests the riskiest assumption.** Pull the most uncertain thing forward,
+   not the easiest.
+3. **Phase size:** 1-3 sprints. Split anything larger.
+4. **Dependencies point forward.** Phase 2 may use Phase 1; never the reverse.
+5. **Every phase has a measurable exit criterion.** Not "when it's finished", but
+   "when this metric reaches this value".
+6. **Technical foundation work is distributed across phases**, never a separate
+   "infrastructure phase" — but Phase 1 must contain a **walking skeleton**.
 
-## 3. `product-owner` çağır
-
-```
-<REQ TABLOSU> + <GOAL listesi> + <kritik NFR'ler> + <kısıtlar>
-
-Görev: Yol haritası üret.
-
-1. Fazlar (en fazla 4). Her faz için:
-   - Ad ve tek cümlelik hipotez ("Bu fazı yayınlarsak şunu öğreneceğiz/sağlayacağız")
-   - Kapsam: REQ-* listesi
-   - Çıkış kriteri: ölçülebilir (hangi GOAL metriği, hangi değer)
-   - Bu fazda YAPMIYORUZ: liste
-   - Yürüyen iskelet: Faz 1 için uçtan uca çalışan en ince dilim ne?
-2. Faz bağımlılık grafiği (Mermaid)
-3. Sürüm eşlemesi: hangi faz hangi sürüm (v0.1, v1.0, ...)
-4. Her faz için en büyük risk ve erken uyarı sinyali
-5. Kesme sırası: takvim daralırsa hangi REQ'ler sırayla çıkarılır (öncelikli liste)
-
-Kural: Her REQ tam olarak bir faza atanmalı. Atanmayan REQ varsa listele ve
-"kapsam dışı mı?" diye sor.
-```
-
-## 4. `delivery-manager` ile gerçeklik kontrolü (lean+ mod)
-
-Aynı mesajda paralel çağrılamaz (PO'nun çıktısına bakar). PO çıktısı geldikten sonra:
+## 3. Invoke `product-owner`
 
 ```
-<FAZ TABLOSU — kapsam ve REQ sayılarıyla>
+<REQ TABLE> + <GOAL list> + <critical NFRs> + <constraints>
 
-Görev: Bu fazlandırma teslim edilebilir mi?
-1. Her faz için kaba sprint tahmini (t-shirt: S/M/L + gerekçe)
-2. Bağımlılık sorunları: bir fazın içinde birbirini bekleyen zincir var mı
-3. Aynı anda çalışılamayacak işler var mı (aynı dosya/modül)
-4. Kritik yol: hangi REQ'ler gecikirse tüm plan kayar
-5. En büyük 3 teslimat riski
+Task: produce the roadmap.
 
-Kısa yaz. Yanıtına "DM-PLAN: ONAY|ŞARTLI|RET" satırıyla başla.
+1. Phases (at most 4). For each:
+   - Name and a one-sentence hypothesis ("If we ship this phase we will learn/enable X")
+   - Scope: REQ-* list
+   - Exit criterion: measurable (which GOAL metric, which value)
+   - NOT doing in this phase: list
+   - Walking skeleton: for Phase 1, what is the thinnest end-to-end working slice?
+2. Phase dependency graph (Mermaid)
+3. Release mapping: which phase maps to which version (v0.1, v1.0, ...)
+4. For each phase, the biggest risk and its early-warning signal
+5. Cut order: if the schedule tightens, which REQs get removed and in what order
+
+Rule: every REQ must be assigned to exactly one phase. List any unassigned REQ and
+ask "is this out of scope?".
 ```
 
-`solo` modda bu adımı atla.
+## 4. Reality check with `delivery-manager` (lean+ mode)
 
-## 5. Sun
+Cannot be called in parallel (it reviews the PO's output). After the PO responds:
 
 ```
-## Yol Haritası
+<PHASE TABLE — with scope and REQ counts>
 
-Faz 1 — <ad>  (v0.1, ~<N> sprint)
-  Hipotez: <...>
-  Kapsam: <N> REQ — <ID listesi>
-  Çıkış: <ölçülebilir kriter>
-  Yapmıyoruz: <liste>
+Task: is this phasing deliverable?
+1. A rough sprint estimate per phase (t-shirt: S/M/L + rationale)
+2. Dependency problems: is there a chain inside a phase that waits on itself
+3. Any work that cannot proceed concurrently (same file/module)
+4. Critical path: which REQs shift the whole plan if delayed
+5. The 3 biggest delivery risks
 
-Faz 2 — ...
-
-Atanmamış REQ: <varsa liste> ⚠
-Teslimat riski: <DM'den en büyük 3>
-Kesme sırası: <takvim daralırsa çıkacaklar, sırayla>
+Be brief. Begin your reply with "DM-PLAN: APPROVED|CONDITIONAL|REJECTED".
 ```
 
-`AskUserQuestion`: `Onayla ve yaz (Önerilen)` / `Faz 1'i daraltacağım` /
-`Faz sırasını değiştireceğim`
+Skip this step in `solo` mode.
 
-## 6. Yaz
+## 5. Present
 
-- `product/roadmap/ROADMAP.md` — üst seviye tablo + bağımlılık grafiği + kesme sırası
-- `product/roadmap/phases/phase-N.md` — her faz için detay
-- `docs/CONTEXT.md` → "Sürüm hedefi" güncellenir
+```
+## Roadmap
+
+Phase 1 — <name>  (v0.1, ~<N> sprints)
+  Hypothesis: <...>
+  Scope: <N> REQs — <id list>
+  Exit: <measurable criterion>
+  Not doing: <list>
+
+Phase 2 — ...
+
+Unassigned REQs: <list, if any> ⚠
+Delivery risk: <the DM's top 3>
+Cut order: <what goes first if the schedule tightens>
+```
+
+`AskUserQuestion`: `Approve and write (Recommended)` / `I want to narrow Phase 1` /
+`I want to reorder the phases`
+
+## 6. Write
+
+- `product/roadmap/ROADMAP.md` — top-level table + dependency graph + cut order
+- `product/roadmap/phases/phase-N.md` — detail per phase
+- `docs/CONTEXT.md` → update "Release target"
 - `.state/project.json` → `phase: "design"`, `.state/gates.jsonl` → DM-PLAN
 
-## 7. Kapat
+## 7. Close
 
 ```
-✓ Yol haritası: <N> faz, <M> sürüm
-  Faz 1: <ad> — <K> REQ
+✓ Roadmap: <N> phases, <M> releases
+  Phase 1: <name> — <K> REQs
 
-▶ Sonraki: /architecture
-   Faz 1 kapsamı için mimari ve teknoloji yığını belirlenecek.
+▶ Next: /architecture
+   The architecture and stack will be determined for the Phase 1 scope.
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- REQ **başlık tablosu** gömülür, tam metinler değil. En büyük tasarruf burada.
-- `solo` modda tek agent çağrısı; `lean+` modda iki (sıralı).
-- Sonraki fazların detayı **şimdi yazılmaz** — o faza gelince `/requirements`
-  ve `/epics` tekrar çalışır.
+- The REQ **heading table** is embedded, not the full text. That is the biggest saving here.
+- One agent call in `solo` mode; two (sequential) in `lean+`.
+- The detail of later phases is **not written now** — `/requirements` and `/epics`
+  run again when those phases arrive.

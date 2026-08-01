@@ -1,121 +1,120 @@
 ---
 name: dod-check
-description: Bir story, sprint veya sürümün Definition of Done kriterlerini kanıta dayalı olarak denetler. "Bitti" kararının verildiği kapı. QA-DONE kapısını işletir.
+description: Audits a story, sprint or release against the Definition of Done using evidence. The gate where "done" is decided. Operates the QA-DONE gate.
 ---
 
-# /dod-check [story-yolu | sprint | release]
+# /dod-check [story-path | sprint | release]
 
-Sahip: `qa-lead`. Kanıtsız ONAY verilmez.
+Owner: `qa-lead`. No approval is given without evidence.
 
 ---
 
-## 1. Kapsamı belirle
+## 1. Determine the scope
 
-| Argüman | Kapsam |
+| Argument | Scope |
 |---|---|
-| story yolu | Tek story DoD |
-| `sprint` | Mevcut sprintin tüm story'leri + sprint DoD |
-| `release` | Sürüm kapsamı + sürüm DoD |
-| yok | Mevcut sprintte `İncelemede` olan story'ler |
+| story path | Single-story DoD |
+| `sprint` | Every story in the current sprint + the sprint DoD |
+| `release` | The release scope + the release DoD |
+| none | Stories in the current sprint with status `In review` |
 
-## 2. Kanıt topla (agent çağırmadan — bu ucuz kısım)
+## 2. Collect the evidence (no agent — this is the cheap part)
 
-Story için:
-- Story dosyası: kabul kriteri checkbox'ları, `Zorunlu kanıt` bölümü, tip
-- Belirtilen test dosyası **gerçekten var mı** (Glob)
-- Testleri **çalıştır** (Bash) ve çıktıyı al — iddiaya güvenme
-- Kod incelemesi verdikti (`.state/gates.jsonl`)
-- `Kapsam DIŞI` bölümündeki işlerin yapılıp yapılmadığı (git diff ile kontrol)
+For a story:
+- The story file: acceptance-criteria checkboxes, the `Required evidence` section, the type
+- Does the named test file **actually exist** (Glob)
+- **Run** the tests (Bash) and capture the output — do not trust claims
+- The code review verdict (`.state/gates.jsonl`)
+- Whether the work in the `Out of scope` section was done (check via git diff)
 
-Sprint/release için ek olarak: regresyon paketi sonucu, açık ŞARTLI kapı maddeleri,
-açık P0/P1 hatalar.
+For sprint/release, additionally: the regression suite result, open `CONDITIONAL` gate
+items, open P0/P1 bugs.
 
-## 3. `qa-lead` çağır
+## 3. Invoke `qa-lead`
 
 ```
-Kapsam: <story/sprint/release>
+Scope: <story/sprint/release>
 
-<STORY BİLGİSİ: başlık, tip, kabul kriterleri ve işaretli durumları,
- iş kuralları, kapsam dışı bölümü>
+<STORY INFORMATION: title, type, acceptance criteria and their checked state,
+ business rules, out-of-scope section>
 
-TOPLANAN KANIT:
-- Test dosyası: <yol> — var/yok
-- Test çalıştırma çıktısı:
-  <gerçek komut çıktısı — kırpma, olduğu gibi ver>
-- Kod incelemesi: CR-CODE <verdikt>, <a> bulgu düzeltildi
-- Değişen dosyalar: <liste>
-- Kapsam dışı bölümüne dokunulmuş mu: <evet/hayır — kanıt>
+COLLECTED EVIDENCE:
+- Test file: <path> — exists/missing
+- Test run output:
+  <the real command output — do not truncate, give it verbatim>
+- Code review: CR-CODE <verdict>, <a> findings fixed
+- Changed files: <list>
+- Was the out-of-scope section touched: <yes/no — evidence>
 
-Görev: QA-DONE kapısı.
+Task: the QA-DONE gate.
 
-Kontrol listesi (.claude/docs/definition-of-done.md):
-1. Tüm kabul kriterleri işaretli VE her biri bir teste bağlı mı?
-   (test adında AC-N geçiyor mu — kontrol et)
-2. Story tipinin zorunlu kanıtı mevcut ve GEÇİYOR mu?
-3. Hata/sınır senaryoları test edilmiş mi? (sadece mutlu yol → RET)
-4. İzlenebilirlik tam mı: test → AC → REQ → GOAL
-5. Kapsam dışına taşma var mı?
-6. Kod incelemesi kapatılmış mı?
+Checklist (.claude/docs/definition-of-done.md):
+1. Are all acceptance criteria checked AND is each bound to a test?
+   (check whether AC-N appears in the test name)
+2. Does the story type's required evidence exist and PASS?
+3. Are error/edge scenarios tested? (happy path only → REJECTED)
+4. Is traceability complete: test → AC → REQ → GOAL
+5. Is there any scope overreach?
+6. Is the code review closed?
 
-Kanıtı gör, iddiaya güvenme. Test çıktısında başarısız varsa RET.
-Yanıtına "QA-DONE: ONAY|ŞARTLI|RET" satırıyla başla.
-ŞARTLI ise en fazla 5 uygulanabilir madde listele.
+Look at the evidence, do not trust claims. If the test output contains failures, REJECTED.
+Begin your reply with "QA-DONE: APPROVED|CONDITIONAL|REJECTED".
+If CONDITIONAL, list at most 5 actionable items.
 ```
 
-## 4. Verdikti işle
+## 4. Process the verdict
 
-| Verdikt | Aksiyon |
+| Verdict | Action |
 |---|---|
-| `ONAY` | Story `Durum: DONE`, `.state/project.json` → `counters.done++` |
-| `ŞARTLI` | Maddeleri göster, ilgili agent'a düzelttir, **kapıyı tekrar çağırma** — düzeltme sonrası ONAY kabul edilir |
-| `RET` | Story `Durum: Hazır`'a döner, eksik listesiyle `delivery-manager`'a bildir |
+| `APPROVED` | Story `Status: DONE`, `.state/project.json` → `counters.done++` |
+| `CONDITIONAL` | Show the items, have the relevant agent fix them, **do not re-invoke the gate** — approval is implied after the fix |
+| `REJECTED` | Story returns to `Ready`, report the gaps to `delivery-manager` |
 
-## 5. Sun
+## 5. Present
 
 ```
-## DoD Denetimi — <kapsam>
+## DoD Audit — <scope>
 
-| Story | Tip | AC | Test | İnceleme | Verdikt |
-| 004 | Logic | 3/3 ✓ | 7/7 ✓ | ONAY | ONAY |
-| 005 | UI | 2/3 ⚠ | 4/5 ✗ | ŞARTLI | RET |
+| Story | Type | AC | Tests | Review | Verdict |
+| 004 | Logic | 3/3 ✓ | 7/7 ✓ | APPROVED | APPROVED |
+| 005 | UI | 2/3 ⚠ | 4/5 ✗ | CONDITIONAL | REJECTED |
 
-Kanıt özeti:
-  Testler: <geçen>/<toplam>
-  Kapsam: <yüzde, varsa>
-  Açık bulgu: <n>
+Evidence summary:
+  Tests: <passed>/<total>
+  Coverage: <percentage, if available>
+  Open findings: <n>
 
-RET/ŞARTLI nedenleri:
-  story-005: AC-3 için test yok; boş liste senaryosu test edilmemiş
+Reasons for REJECTED/CONDITIONAL:
+  story-005: no test for AC-3; the empty-list scenario is untested
 
-▶ Sonraki: <duruma göre>
+▶ Next: <depending on the situation>
 ```
 
-## 6. Sprint/release modunda ek kontroller
+## 6. Additional checks in sprint/release mode
 
 ```
 Sprint DoD:
-[ ] Sprint hedefi karşılandı mı (yoksa sapma gerekçesi)
-[ ] Tüm story'ler DONE veya gerekçeli backlog'a döndü
-[ ] Regresyon paketi yeşil
-[ ] Açık ŞARTLI kapı maddesi yok (.state/gates.jsonl)
-[ ] docs/CONTEXT.md güncellendi
-[ ] product/risks.md gözden geçirildi
+[ ] Was the sprint goal met (otherwise document the variance)
+[ ] Is every story DONE or returned to the backlog with a reason
+[ ] Is the regression suite green
+[ ] Are there no open CONDITIONAL gate items (.state/gates.jsonl)
+[ ] Was docs/CONTEXT.md updated
+[ ] Was product/risks.md reviewed
 
-Release DoD: (.claude/docs/definition-of-done.md — Sürüm DoD bölümü)
+Release DoD: (.claude/docs/definition-of-done.md — Release DoD section)
 ```
 
-## 7. Kaydet
+## 7. Record
 
-- `.state/gates.jsonl` → QA-DONE satırı
-- Story dosyalarında durum güncellemesi
-- `.state/project.json` → sayaçlar
-- `docs/CONTEXT.md` → "Şu an ne yapılıyor" (sprint modunda)
+- `.state/gates.jsonl` → the QA-DONE line
+- Status updates in the story files
+- `.state/project.json` → counters
+- `docs/CONTEXT.md` → "Current work" (in sprint mode)
 
 ---
 
-## Token notu
+## Token note
 
-- **1 agent çağrısı.** Kanıt toplama bedava (dosya okuma + Bash).
-- Test çıktısını **kırpmadan** göm — bu kapının tüm değeri kanıtta.
-- Birden fazla story denetleniyorsa **tek çağrıda hepsini** gönder,
-  story başına ayrı çağrı yapma.
+- **1 agent call.** Evidence collection is free (file reads + Bash).
+- Embed the test output **without truncating** — the entire value of this gate is in the evidence.
+- If several stories are being audited, send them **all in one call**; never one call per story.

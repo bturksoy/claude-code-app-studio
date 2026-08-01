@@ -1,107 +1,107 @@
 ---
 name: retro
-description: Sprint veya sürüm retrospektifi yapar. Ne iyi gitti, ne gitmedi, kök nedenler ve sahiplenilmiş aksiyon maddeleri üretir. Süreç iyileştirmesinin yeri.
+description: Runs a sprint or release retrospective. Produces what went well, what did not, root causes and owned action items. Where process improvement happens.
 ---
 
-# /retro [sprint | release | "<olay>"]
+# /retro [sprint | release | "<incident>"]
 
-Sahip: `delivery-manager`.
+Owner: `delivery-manager`.
 
 ---
 
-## 1. Veri topla (bedava — bu retro'nun değeri verinin gerçekliğinde)
+## 1. Gather the data (free — the value of a retro lies in real numbers)
 
-| Veri | Kaynak |
+| Data | Source |
 |---|---|
-| Planlanan vs tamamlanan story | sprint dosyası + story durumları |
-| Tahmin vs gerçek | story tahminleri + tamamlanma sırası |
-| Bloke olaylar ve süreleri | sprint dosyası notları |
-| Açılan/kapanan hata sayısı | `docs/qa/bugs/` |
-| Kapı verdiktleri | `.state/gates.jsonl` — kaç RET, kaç ŞARTLI |
-| Agent çağrı sayısı | `.state/agent-log.jsonl` |
-| Kapsam değişiklikleri | `docs/DECISIONS.md` |
-| Gerçekleşen riskler | `product/risks.md` |
+| Planned vs completed stories | The sprint file + story statuses |
+| Estimate vs actual | Story estimates + completion order |
+| Blocking events and their duration | Notes in the sprint file |
+| Bugs opened/closed | `docs/qa/bugs/` |
+| Gate verdicts | `.state/gates.jsonl` — how many REJECTED, how many CONDITIONAL |
+| Agent call count | `.state/agent-log.jsonl` |
+| Scope changes | `docs/DECISIONS.md` |
+| Risks that materialized | `product/risks.md` |
 
-## 2. `delivery-manager` çağır
-
-```
-Sprint/Sürüm: <NN>
-Hedef: <sprint hedefi>
-
-VERİLER:
-Planlanan story: <N> | Tamamlanan: <M> | Devreden: <K>
-Tahmin sapması: <story bazında liste>
-Bloke olaylar: <neden + süre>
-Hatalar: açılan <a>, kapanan <b>, üretime kaçan <c>
-Kapı verdiktleri: ONAY <x>, ŞARTLI <y>, RET <z>
-  RET alanlar: <hangi kapı, hangi story>
-Agent çağrısı: <N> | Kapı: <M>
-Kapsam değişiklikleri: <liste>
-Gerçekleşen riskler: <liste>
-
-Görev: Retrospektif.
-
-1. Sprint hedefi karşılandı mı? Karşılanmadıysa asıl neden ne?
-   (Semptom değil kök neden ara — "zaman yetmedi" bir neden değildir)
-2. İyi giden 3 şey — TEKRARLANABİLİR olanlar (şans değil)
-3. Kötü giden 3 şey — her biri için "5 neden" ile kök nedene in
-4. Tahmin doğruluğu: sistematik sapma var mı, hangi tip story'de
-5. Kalite sinyalleri: RET alan kapılar bir desene mi işaret ediyor
-6. Süreç maliyeti: agent çağrı sayısı makul mü, nerede israf var
-   (>30 çağrı/sprint = görev paketi kalitesi sorunu)
-7. Aksiyon maddeleri — EN FAZLA 3, her biri:
-   somut, sahipli, ölçülebilir, bir sonraki sprintte doğrulanabilir
-   ("daha dikkatli olalım" bir aksiyon değildir)
-
-Önceki retro'nun aksiyonları uygulandı mı? Uygulanmadıysa neden?
-```
-
-## 3. Sun
+## 2. Invoke `delivery-manager`
 
 ```
-## Retrospektif — Sprint <NN>
-Hedef: <hedef> → <karşılandı/karşılanmadı>
+Sprint/Release: <NN>
+Goal: <sprint goal>
 
-Sayılar
-  Story: <M>/<N> tamamlandı | Devreden: <K>
-  Tahmin sapması: <ortalama %>
-  Hata: <a> açıldı, <b> kapandı, <c> üretime kaçtı
-  Kapı: ONAY <x> | ŞARTLI <y> | RET <z>
-  Agent çağrısı: <N> (hedef <30)
+DATA:
+Planned stories: <N> | Completed: <M> | Carried over: <K>
+Estimate variance: <per-story list>
+Blocking events: <cause + duration>
+Bugs: opened <a>, closed <b>, escaped to production <c>
+Gate verdicts: APPROVED <x>, CONDITIONAL <y>, REJECTED <z>
+  Which were REJECTED: <which gate, which story>
+Agent calls: <N> | Gates: <M>
+Scope changes: <list>
+Risks that materialized: <list>
 
-İyi giden (tekrarlanabilir)
-  - <madde> — neden işe yaradı: <...>
+Task: run the retrospective.
 
-Kötü giden (kök nedenle)
-  - Semptom: <...> → Kök neden: <...>
+1. Was the sprint goal met? If not, what is the actual reason?
+   (Look for a root cause, not a symptom — "we ran out of time" is not a reason)
+2. Three things that went well — the REPEATABLE ones (not luck)
+3. Three things that went badly — drive each to a root cause with "5 whys"
+4. Estimate accuracy: is there a systematic bias, and in which story types
+5. Quality signals: do the REJECTED gates point to a pattern
+6. Process cost: is the agent call count reasonable, where is the waste
+   (>30 calls/sprint = a task-packet quality problem)
+7. Action items — AT MOST 3, each:
+   concrete, owned, measurable, verifiable in the next sprint
+   ("let's be more careful" is not an action)
 
-Aksiyonlar (sonraki sprint)
-  | # | Aksiyon | Sahip | Nasıl doğrulanacak |
-
-Önceki retro aksiyonları: <uygulanan>/<toplam>
+Were the previous retro's actions applied? If not, why?
 ```
 
-## 4. Yaz
+## 3. Present
+
+```
+## Retrospective — Sprint <NN>
+Goal: <goal> → <met/not met>
+
+Numbers
+  Stories: <M>/<N> completed | Carried over: <K>
+  Estimate variance: <average %>
+  Bugs: <a> opened, <b> closed, <c> escaped to production
+  Gates: APPROVED <x> | CONDITIONAL <y> | REJECTED <z>
+  Agent calls: <N> (target <30)
+
+Went well (repeatable)
+  - <item> — why it worked: <...>
+
+Went badly (with root cause)
+  - Symptom: <...> → Root cause: <...>
+
+Actions (next sprint)
+  | # | Action | Owner | How it will be verified |
+
+Previous retro actions: <applied>/<total>
+```
+
+## 4. Write
 
 - `product/sprints/retro-<NN>.md`
-- Aksiyon maddelerini bir sonraki sprint dosyasına **taşı** (unutulmasın)
-- Süreç aksiyonu ise ilgili `.claude/` dosyasında değişiklik öner
-  (örn. story şablonuna alan eklenmesi) — kullanıcıya sor
-- `docs/CONTEXT.md` → "Bilinen borç ve riskler" güncelle
+- **Carry** the action items into the next sprint file (so they are not forgotten)
+- If an action is about process, propose a change to the relevant `.claude/` file
+  (e.g. adding a field to the story template) — ask the user
+- `docs/CONTEXT.md` → update "Known debt and risks"
 
-## 5. Kapat
+## 5. Close
 
 ```
 ✓ Retro → product/sprints/retro-<NN>.md
-  <N> aksiyon maddesi, sahipleriyle
+  <N> action items with owners
 
-▶ Sonraki: /sprint-plan  (aksiyonlar yeni sprinte taşındı)
+▶ Next: /sprint-plan  (the actions have been carried into the new sprint)
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **1 agent çağrısı.** Veri toplama bedava.
-- Retro'nun değeri **gerçek sayılarda** — hafızadan yazma, dosyalardan çıkar.
-- En fazla 3 aksiyon: uygulanabilir olsun, liste olmasın.
+- **1 agent call.** Data gathering is free.
+- A retro's value is in **real numbers** — extract them from files, never from memory.
+- At most 3 actions: make them applicable, not a list.

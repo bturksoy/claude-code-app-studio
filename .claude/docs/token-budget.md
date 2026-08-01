@@ -1,133 +1,136 @@
-# Token Bütçesi ve Optimizasyon Protokolü
+# Token Budget and Optimization Protocol
 
-Bu sistem çok-agent'lı çalışır; kontrolsüz bırakılırsa token tüketimi patlar.
-Aşağıdaki kurallar **bağlayıcıdır** ve her agent tanımında referans verilir.
-
----
-
-## 1. Bağlam Piramidi
-
-Bir agent bilgiyi **en ucuz katmandan** almalıdır. Üst katman yetmiyorsa alta iner.
-
-```
-Katman 1 (bedava)   → Görev paketi (story/task dosyası) — kendi kendine yeterlidir
-Katman 2 (ucuz)     → docs/CONTEXT.md (≤200 satır) + .state/project.json
-Katman 3 (orta)     → İlgili SSoT dosyası (PRD / ADR / OpenAPI / şema) — hedefli bölüm
-Katman 4 (pahalı)   → Kaynak kodda Grep ile hedefli arama
-Katman 5 (çok pahalı) → Tam dosya okuma, dizin taraması
-```
-
-**Kural:** Katman 5'e inmeden önce, hangi Katman 3 dosyasının eksik olduğunu belirt.
-Genelde cevap "dokümantasyon eksik"tir, "daha çok kod oku" değil.
+This system runs many agents; left unchecked, token consumption explodes.
+The rules below are **binding** and referenced from every agent definition.
 
 ---
 
-## 2. Okuma bütçeleri (agent başına, tek görev için)
+## 1. The context pyramid
 
-| Agent katmanı | Maks. tam dosya okuma | Maks. Grep | Notu |
+An agent must get information from the **cheapest layer** that works. Only descend
+when the layer above is insufficient.
+
+```
+Layer 1 (free)        → The task packet (story/task file) — self-sufficient by design
+Layer 2 (cheap)       → docs/CONTEXT.md (≤200 lines) + .state/project.json
+Layer 3 (medium)      → The relevant SSoT file (PRD / ADR / OpenAPI / schema) — targeted section
+Layer 4 (expensive)   → Targeted Grep in source code
+Layer 5 (very costly) → Reading whole files, scanning directories
+```
+
+**Rule:** Before descending to Layer 5, state which Layer 3 file is missing.
+The answer is usually "documentation is missing", not "read more code".
+
+---
+
+## 2. Read budgets (per agent, per task)
+
+| Agent tier | Max whole-file reads | Max greps | Note |
 |---|---|---|---|
-| Yönetim (ceo, cto) | 3 | 5 | Sadece özet ve karar dosyaları |
-| Ürün/Planlama | 6 | 10 | PRD/FRD kendi alanı |
-| Geliştirme | 8 | 15 | Story + kontrat + dokunacağı modül |
-| Kalite | 8 | 20 | Test için geniş arama makul |
+| Executive (ceo, cto) | 3 | 5 | Summary and decision files only |
+| Product/Planning | 6 | 10 | PRD/FRD is their own domain |
+| Engineering | 8 | 15 | Story + contract + the module being touched |
+| Quality | 8 | 20 | Broad search is reasonable for testing |
 
-Bütçe aşılacaksa agent **durur** ve şunu bildirir:
-> "Bütçe aşıldı. Devam etmek için X dosyasına da bakmam gerekiyor — onaylıyor musun?"
-
----
-
-## 3. Alt-agent (Task) protokolü
-
-Bir agent başka bir agent'ı çağırdığında:
-
-- **Girdi:** Görev + gerekli bağlamın **özeti** verilir; "şu dosyaları oku" denmez,
-  gerekli içerik prompt'a gömülür. Alt-agent kör başlar; ne kadar az arama yaparsa o kadar iyi.
-- **Çıktı:** Alt-agent **yapılandırılmış özet** döner — tam transkript, tam dosya
-  içeriği veya düşünce zinciri **dönmez**. Standart format:
-
-```
-VERDİKT: <ONAY | ŞARTLI | RET | TAMAMLANDI | BLOKE>
-ÖZET: <en fazla 3 cümle>
-BULGULAR:
-- [SEVİYE] <dosya:satır> — <tek cümle>
-SONRAKİ ADIM: <tek satır>
-```
-
-- **Paralellik:** Bağımsız işler tek mesajda paralel çağrılır. Bağımlı işler
-  zincirlenir; **asla** "her ihtimale karşı" agent açılmaz.
+If the budget will be exceeded, the agent **stops** and reports:
+> "Budget exceeded. To continue I need to look at X as well — do you approve?"
 
 ---
 
-## 4. Model seçimi
+## 3. Subagent (Task) protocol
 
-| İş tipi | Model | Örnek |
+When one agent calls another:
+
+- **Input:** the task plus a **summary** of the required context. Never say "read
+  these files" — embed the needed content in the prompt. The subagent starts blind;
+  the less it searches, the better.
+- **Output:** the subagent returns a **structured summary** — never a full transcript,
+  file dump, or chain of thought. Standard format:
+
+```
+VERDICT: <APPROVED | CONDITIONAL | REJECTED | COMPLETE | BLOCKED>
+SUMMARY: <at most 3 sentences>
+FINDINGS:
+- [LEVEL] <file:line> — <one sentence>
+NEXT STEP: <one line>
+```
+
+- **Parallelism:** independent work is called in parallel in a single message.
+  Dependent work is chained. **Never** spawn an agent "just in case".
+
+---
+
+## 4. Model selection
+
+| Work type | Model | Example |
 |---|---|---|
-| Muğlak, stratejik, çok değişkenli | `opus` | Mimari karar, kapsam pazarlığı, gereksinim çıkarımı |
-| Belirli girdi → belirli çıktı | `sonnet` | Story implementasyonu, test yazımı, kod incelemesi |
-| Mekanik/şablon | `haiku` | Changelog, index güncelleme, dosya adı denetimi, format |
+| Ambiguous, strategic, many variables | `opus` | Architecture decisions, scope negotiation, requirements elicitation |
+| Defined input → defined output | `sonnet` | Story implementation, test writing, code review |
+| Mechanical/templated | `haiku` | Changelog, index refresh, filename checks, formatting |
 
-Bir işi bir üst modele terfi ettirmeden önce sor: *girdi yeterince net mi?*
-Net değilse çözüm daha büyük model değil, **daha iyi görev paketi**dir.
-
----
-
-## 5. Görev paketi (Task Packet) ilkesi
-
-Bir story/görev dosyası **kendi kendine yeterli** olmalıdır. İçinde:
-
-- İlgili kabul kriterleri (kopyalanmış, referans değil)
-- Uygulanacak ADR'nin **karar özeti** (ADR'yi açmaya gerek kalmamalı)
-- Dokunulacak dosya yolları (tahmin değil, tespit edilmiş)
-- Kapsam dışı olanlar (komşu story'ler)
-- Hazır test senaryoları
-
-Bu, geliştirici agent'ın 8 dosya yerine 1 dosya okumasını sağlar.
-**En büyük token tasarrufu buradan gelir.**
+Before promoting work to a larger model, ask: *is the input actually clear?*
+If not, the fix is not a bigger model — it is a **better task packet**.
 
 ---
 
-## 6. Kapı (gate) modu
+## 5. The task packet principle
 
-`product/review-mode.txt` içeriği:
+A story/task file must be **self-sufficient**. It contains:
 
-| Mod | Çalışan kapılar | Tipik ek maliyet |
+- The relevant acceptance criteria (copied, not referenced)
+- The **decision summary** of the governing ADR (so the ADR need never be opened)
+- The file paths to touch (identified, not guessed)
+- What is out of scope (neighbouring stories)
+- Ready-made test scenarios
+
+This lets the engineering agent read 1 file instead of 8.
+**This is where the largest token savings come from.**
+
+---
+
+## 6. Gate mode
+
+Contents of `product/review-mode.txt`:
+
+| Mode | Gates that run | Typical overhead |
 |---|---|---|
-| `full` | Hepsi (~14 kapı) | +%60 |
-| `lean` | Sadece faz geçişleri (~5 kapı) | +%20 |
-| `solo` | Yok | +%0 |
+| `full` | All (~14 gates) | +60% |
+| `lean` | Phase transitions only (~5 gates) | +20% |
+| `solo` | None | +0% |
 
-Her skill, kapı çağırmadan önce bu dosyayı okur ve moda göre atlar.
-
----
-
-## 7. Dokümantasyon hijyeni
-
-- **Şişme kontrolü:** `docs/CONTEXT.md` 200 satırı, `docs/DECISIONS.md` 300 satırı
-  aşarsa `/context-compact` çalıştırılır.
-- **Index dosyaları:** Her koleksiyon dizininde (`adr/`, `epics/`, `test-cases/`)
-  bir `index.md` bulunur. Agent önce index okur, sonra tek dosyaya iner.
-- **Tekrar yasağı:** Aynı bilgi iki dosyada yaşamaz. Kopya bulunursa kaynağa link verilir.
-- **Append-only tercih:** Karar günlüğü ve changelog'a ekleme yapılır, yeniden yazılmaz —
-  prompt cache'i korur.
+Every skill reads this file before invoking a gate and skips accordingly.
 
 ---
 
-## 8. Oturum disiplini
+## 7. Documentation hygiene
 
-- Bir oturumda **bir faz** yürüt. Faz bitince `/status` ile durumu diske yaz,
-  yeni oturuma geç. Uzun oturumlar compact maliyeti üretir.
-- Uzun çıktıları (rapor, plan) ekrana **iki kez** basma — dosyaya yaz, ekrana özet ver.
-- Aynı dosyayı düzenledikten sonra doğrulamak için tekrar okuma.
+- **Bloat control:** if `docs/CONTEXT.md` exceeds 200 lines or `docs/DECISIONS.md`
+  exceeds 300, run `/context-compact`.
+- **Index files:** every collection directory (`adr/`, `epics/`, `test-cases/`) has an
+  `index.md`. Agents read the index first, then drill into a single file.
+- **No duplication:** the same fact never lives in two files. If a copy is found,
+  replace it with a link to the source.
+- **Prefer append-only:** add to the decision log and changelog rather than rewriting —
+  this preserves the prompt cache.
 
 ---
 
-## 9. Ölçüm
+## 8. Session discipline
 
-`/status` çıktısında son sprint için şu satır bulunur:
+- Run **one phase per session**. When a phase ends, write state to disk with `/status`
+  and start a fresh session. Long sessions incur compaction costs.
+- Never print long outputs (reports, plans) twice — write to file, summarize on screen.
+- Do not re-read a file just to verify an edit you made.
+
+---
+
+## 9. Measurement
+
+The `/status` output includes this line for the current sprint:
 
 ```
-Token notu: <N> agent çağrısı, <M> kapı, mod=<lean>. Öneri: <varsa>
+Token note: <N> agent calls, <M> gates, mode=<lean>. Suggestion: <if any>
 ```
 
-Bir sprintte 30'dan fazla agent çağrısı olduysa `delivery-manager` görev
-paketlerinin yetersiz olduğunu raporlar.
+If a sprint exceeds 30 agent calls, `delivery-manager` reports that task packets
+are inadequate.

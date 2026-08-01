@@ -1,93 +1,93 @@
 ---
 name: help
-description: App Studio komut listesini faza göre gruplu şekilde gösterir. Argüman verilirse o komutun ne yaptığını açıklar.
+description: Shows the App Studio command list grouped by phase. With an argument, explains what that command does.
 ---
 
 # /help
 
-## Argümansız kullanım
+## Without arguments
 
-`.state/project.json` varsa mevcut fazı oku ve **o fazın komutlarını başa al**,
-diğerlerini kısalt. Yoksa tamamını göster.
-
-```
-# Claude Code App Studio — Komutlar
-
-## Başlangıç
-/start                    Durum tespiti + sonraki adım
-/kickoff "<fikir>"        Yeni proje başlat (CEO + PO)
-/onboard                  Mevcut kod tabanını sisteme al
-/status                   Proje durum panosu
-
-## Faz 1 — Keşif & Gereksinim
-/discovery                PO + BA round-table: problem, persona, kapsam
-/roundtable "<konu>"      Çok rollü tartışma + karar
-/prd                      Ürün gereksinim dokümanı
-/requirements             FRD + NFR + veri sözlüğü
-/roadmap                  Fazlandırma ve sürüm planı
-/estimate                 Efor tahmini
-/scope-check              Kapsam kayması kontrolü
-
-## Faz 2 — Mimari & Tasarım
-/architecture             Mimari + teknoloji yığını
-/adr "<konu>"             Mimari karar kaydı
-/api-contract             OpenAPI sözleşmesi
-/data-model               ER + şema + migration planı
-/ux-flow                  Persona, akış, wireframe
-/design-system            Token + komponent kataloğu
-/threat-model             Güvenlik tehdit modeli
-
-## Faz 3 — Planlama & Geliştirme
-/epics                    Epic kırılımı
-/stories <epic>           Story üretimi (görev paketi)
-/sprint-plan              Sprint + görev dağılımı
-/assign <story>           Story'yi doğru agent'a yönlendir
-/dev-task <story>         Story'yi implement et
-/team-feature <epic>      Uçtan uca dikey dilim, çok agent
-/handoff                  Agent'lar arası devir paketi
-
-## Faz 4 — Kalite
-/code-review [kapsam]     Bağımsız kod incelemesi
-/test-plan                Test planı ve kapsam
-/qa-run [kapsam]          Testleri çalıştır ve raporla
-/bug "<açıklama>"         Hata kaydı + triage
-/security-review          OWASP + tehdit doğrulaması
-/perf-check               Performans bütçeleri
-/dod-check <story>        "Bitti" kapısı
-
-## Faz 5 — Yayın
-/release <sürüm>          Sürüm planı + go/no-go
-/changelog                Değişiklik günlüğü
-/hotfix "<sorun>"         Acil düzeltme hattı
-/retro                    Retrospektif
-
-## Yardımcı
-/context-compact          Dokümanları sıkıştır, token tasarrufu
-```
-
-## Argümanlı kullanım — `/help <komut>`
-
-`.claude/skills/<komut>/SKILL.md` dosyasını oku ve şu özeti ver:
+If `.state/project.json` exists, read the current phase and **put that phase's commands
+first**, abbreviating the rest. Otherwise show everything.
 
 ```
-/<komut>
-Ne yapar: <1-2 cümle>
-Sahibi: <agent>
-Girdi: <ne gerekir>
-Çıktı: <hangi dosyalar>
-Öncesi: <hangi komut çalışmış olmalı>
-Sonrası: <mantıklı bir sonraki komut>
+# Claude Code App Studio — Commands
+
+## Bootstrap
+/start                    State detection + next step
+/kickoff "<idea>"         Start a new project (CEO + PO)
+/onboard                  Bring an existing codebase into the system
+/status                   Project status dashboard
+
+## Phase 1 — Discovery & Requirements
+/discovery                PO + BA round-table: problem, personas, scope
+/roundtable "<topic>"     Multi-role discussion + decision
+/prd                      Product requirements document
+/requirements             FRD + NFR + data dictionary
+/roadmap                  Phasing and release plan
+/estimate                 Effort estimation
+/scope-check              Scope-creep check
+
+## Phase 2 — Architecture & Design
+/architecture             Architecture + technology stack
+/adr "<topic>"            Architecture decision record
+/api-contract             OpenAPI contract
+/data-model               ER + schema + migration plan
+/ux-flow                  Personas, flows, wireframes
+/design-system            Tokens + component catalogue
+/threat-model             Security threat model
+
+## Phase 3 — Planning & Development
+/epics                    Epic breakdown
+/stories <epic>           Story generation (task packets)
+/sprint-plan              Sprint + task assignment
+/assign <story>           Route a story to the right agent
+/dev-task <story>         Implement a story
+/team-feature <epic>      End-to-end vertical slice, multi-agent
+/handoff                  Handoff packet between agents
+
+## Phase 4 — Quality
+/code-review [scope]      Independent code review
+/test-plan                Test plan and coverage
+/qa-run [scope]           Run tests and report
+/bug "<description>"      Bug report + triage
+/security-review          OWASP + threat verification
+/perf-check               Performance budgets
+/dod-check <story>        The "done" gate
+
+## Phase 5 — Release
+/release <version>        Release plan + go/no-go
+/changelog                Change log
+/hotfix "<issue>"         Emergency fix path
+/retro                    Retrospective
+
+## Utility
+/context-compact          Compact documents, save tokens
 ```
 
-## Ek bilgi
+## With an argument — `/help <command>`
 
-Kullanıcı sistemi anlamak isterse şu dosyalara yönlendir:
+Read `.claude/skills/<command>/SKILL.md` and produce this summary:
 
-| Soru | Dosya |
+```
+/<command>
+What it does: <1-2 sentences>
+Owner: <agent>
+Input: <what is required>
+Output: <which files>
+Before: <which command must have run>
+After: <a sensible next command>
+```
+
+## Further reading
+
+If the user wants to understand the system, point them to:
+
+| Question | File |
 |---|---|
-| Roller ve yetkileri | `.claude/docs/agent-roster.md` |
-| Kim kime rapor verir | `.claude/docs/coordination-rules.md` |
-| Token maliyetini nasıl düşürürüm | `.claude/docs/token-budget.md` |
-| "Bitti" ne demek | `.claude/docs/definition-of-done.md` |
-| Kalite kapıları | `.claude/docs/gates.md` |
-| Dosya nerede durur | `.claude/docs/context-protocol.md` |
+| Roles and their authority | `.claude/docs/agent-roster.md` |
+| Who reports to whom | `.claude/docs/coordination-rules.md` |
+| How do I lower token cost | `.claude/docs/token-budget.md` |
+| What does "done" mean | `.claude/docs/definition-of-done.md` |
+| Quality gates | `.claude/docs/gates.md` |
+| Where do files live | `.claude/docs/context-protocol.md` |

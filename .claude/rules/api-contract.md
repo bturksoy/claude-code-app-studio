@@ -1,97 +1,97 @@
-# API Sözleşme Kuralları
+# API Contract Rules
 
-**Kapsam:** `docs/api/**`, `**/openapi.y*ml`, `**/*.proto`, `docs/api/events.md`
+**Scope:** `docs/api/**`, `**/openapi.y*ml`, `**/*.proto`, `docs/api/events.md`
 
-**Sahip:** `solution-architect`. Bu dosyalar **tek taraflı değiştirilemez** —
-frontend ve backend geliştiricileri tüketir, üretmez.
+**Owner:** `solution-architect`. These files **cannot be changed unilaterally** —
+frontend and backend developers consume them, they do not produce them.
 
 ---
 
-## Yol tasarımı
+## Path design
 
-- Kaynak odaklı, çoğul isim: `/orders`, `/orders/{id}`, `/orders/{id}/items`
-- Fiil kullanma: `/getOrders`, `/createOrder` **yasak**
-- İç içe derinlik en fazla 2 seviye
-- Küçük harf, tire ile ayır: `/purchase-orders`
-- Eylem gerçekten kaynak değilse alt kaynak olarak modelle:
+- Resource-oriented, plural nouns: `/orders`, `/orders/{id}`, `/orders/{id}/items`
+- No verbs: `/getOrders`, `/createOrder` are **forbidden**
+- Nesting depth at most 2 levels
+- Lowercase, hyphen-separated: `/purchase-orders`
+- If an action is genuinely not a resource, model it as a sub-resource:
   `POST /orders/{id}/cancellation`
 
-## Durum kodları
+## Status codes
 
-| Kod | Ne zaman |
+| Code | When |
 |---|---|
-| 200 | Başarılı okuma/güncelleme |
-| 201 | Oluşturma (+ `Location` başlığı) |
-| 204 | Başarılı, gövde yok (silme) |
-| 400 | Geçersiz istek yapısı |
-| 401 | Kimlik doğrulanmamış |
-| 403 | Kimlik var, yetki yok |
-| 404 | Kaynak yok (veya yetkisiz — sızıntı önleme) |
-| 409 | Çakışma (benzersizlik, durum ihlali) |
-| 422 | Yapı geçerli, iş kuralı ihlali |
-| 429 | Hız sınırı |
-| 5xx | Sunucu hatası (detay sızdırmaz) |
+| 200 | Successful read/update |
+| 201 | Creation (+ `Location` header) |
+| 204 | Success, no body (deletion) |
+| 400 | Malformed request |
+| 401 | Not authenticated |
+| 403 | Authenticated but not authorized |
+| 404 | Resource missing (or unauthorized — to prevent leakage) |
+| 409 | Conflict (uniqueness, state violation) |
+| 422 | Structurally valid, business rule violated |
+| 429 | Rate limited |
+| 5xx | Server error (leaks no detail) |
 
-Her endpoint'te hangi kodların dönebileceği **açıkça tanımlı**.
+Every endpoint **explicitly declares** which codes it can return.
 
-## Hata gövdesi — RFC 7807
+## Error body — RFC 7807
 
-**Tek tip**, `components/responses` altında tanımlı, her endpoint referans verir:
+**One shape**, defined under `components/responses`, referenced by every endpoint:
 
 ```json
 {
   "type": "https://example.com/errors/insufficient-stock",
-  "title": "Yetersiz stok",
+  "title": "Insufficient stock",
   "status": 409,
-  "detail": "Ürün SKU-123 için 5 adet istendi, 2 adet mevcut.",
+  "detail": "5 units requested for SKU-123, 2 available.",
   "instance": "/orders/9f3a",
-  "errors": [{"field": "items[0].quantity", "message": "En fazla 2"}]
+  "errors": [{"field": "items[0].quantity", "message": "At most 2"}]
 }
 ```
 
-İç detay (stack trace, SQL, dosya yolu) **asla** dönmez.
+Internal detail (stack trace, SQL, file path) is **never** returned.
 
-## Yanıt zarfı
+## Response envelope
 
-Tutarlı, endpoint'e göre değişmez:
+Consistent, never varying per endpoint:
 
 ```json
 { "data": {...}, "meta": {...} }
 ```
 
-Liste yanıtları: `{"data": [...], "meta": {"cursor": "...", "hasMore": true}}`
+List responses: `{"data": [...], "meta": {"cursor": "...", "hasMore": true}}`
 
-## Sayfalama, sıralama, filtreleme
+## Pagination, sorting, filtering
 
-- **Tek desen** seç (cursor veya offset), hepsinde kullan
-- Varsayılan limit tanımlı, maksimum limit zorunlu
-- Sıralama: `?sort=created_at:desc` — tek format
-- Filtreleme: `?status=paid&created_after=2026-01-01` — tutarlı adlandırma
-- Sınırsız sonuç kümesi **yasak**
+- Pick **one pattern** (cursor or offset) and use it everywhere
+- Default limit defined, maximum limit enforced
+- Sorting: `?sort=created_at:desc` — a single format
+- Filtering: `?status=paid&created_after=2026-01-01` — consistent naming
+- Unbounded result sets are **forbidden**
 
-## Yetkilendirme
+## Authorization
 
-- `securitySchemes` tanımlı
-- Her endpoint'te `security` belirtilmiş
-- Public endpoint'ler açıkça `security: []` — unutulmuş sayılmasın
+- `securitySchemes` defined
+- `security` specified on every endpoint
+- Public endpoints explicitly declare `security: []` — so they are not mistaken for omissions
 
 ## Idempotency
 
-Yazma işlemleri tekrarlanabilir olmalı:
-- `Idempotency-Key` başlığı (POST için), veya
-- Doğal anahtar üzerinden çakışma tespiti (409)
+Write operations must be repeatable:
+- An `Idempotency-Key` header (for POST), or
+- Conflict detection via a natural key (409)
 
-## Şemalar
+## Schemas
 
-- Tüm şemalar `components/schemas` altında, tekrar yok
-- Her alan: tip, format, örnek, zorunluluk, kısıt (min/max/pattern/enum)
-- Tarih: `format: date-time` (ISO 8601, UTC)
-- Para: minor-unit `integer` + ayrı `currency` alanı, veya `string` decimal
-- Kimlik: `format: uuid` veya açıkça belirtilmiş
+- All schemas under `components/schemas`, no duplication
+- Every field: type, format, example, requiredness, constraints (min/max/pattern/enum)
+- Dates: `format: date-time` (ISO 8601, UTC)
+- Money: minor-unit `integer` plus a separate `currency` field, or a decimal `string`
+- Identifiers: `format: uuid` or explicitly specified
 
-## İzlenebilirlik
+## Traceability
 
-Her endpoint bir gereksinime bağlı:
+Every endpoint is bound to a requirement:
 ```yaml
 paths:
   /orders:
@@ -99,33 +99,33 @@ paths:
       x-requirement: REQ-ORD-003
 ```
 
-## Sürümleme ve değişim
+## Versioning and change
 
-| Değişim | Kırıcı mı | Yapılabilir mi |
+| Change | Breaking? | Allowed |
 |---|---|---|
-| Yeni opsiyonel alan (yanıt) | Hayır | ✓ |
-| Yeni opsiyonel parametre | Hayır | ✓ |
-| Yeni endpoint | Hayır | ✓ |
-| Alan kaldırma | **Evet** | Yeni sürüm + geçiş |
-| Alan yeniden adlandırma | **Evet** | Yeni sürüm + geçiş |
-| Tip değiştirme | **Evet** | Yeni sürüm + geçiş |
-| Zorunlu parametre ekleme | **Evet** | Yeni sürüm + geçiş |
-| Durum kodu değiştirme | **Evet** | Yeni sürüm + geçiş |
+| New optional field (response) | No | ✓ |
+| New optional parameter | No | ✓ |
+| New endpoint | No | ✓ |
+| Removing a field | **Yes** | New version + migration |
+| Renaming a field | **Yes** | New version + migration |
+| Changing a type | **Yes** | New version + migration |
+| Adding a required parameter | **Yes** | New version + migration |
+| Changing a status code | **Yes** | New version + migration |
 
-Kırıcı değişiklik: yeni sürüm, paralel yayın süresi, kullanımdan kaldırma duyurusu,
-geçiş rehberi. Sürümleme stratejisi bir ADR'de kayıtlı.
+A breaking change requires: a new version, a dual-publish period, a deprecation notice,
+and a migration guide. The versioning strategy is recorded in an ADR.
 
-## Event sözleşmeleri (`docs/api/events.md`)
+## Event contracts (`docs/api/events.md`)
 
-- Her event: ad, sürüm, yayınlayan, tetikleyici, anahtar, sıra garantisi, alan tablosu
-- Alan **silme veya yeniden adlandırma yasak** — yeni alan eklenir, eskisi deprecate
-- Tekilleştirme için `event_id`, zaman için `occurred_at` zorunlu
-- Teslimat semantiği belirtilir (at-least-once → tüketici idempotent olmalı)
+- Every event: name, version, publisher, trigger, key, ordering guarantee, field table
+- Removing or renaming fields is **forbidden** — add new fields and deprecate old ones
+- `event_id` for deduplication and `occurred_at` for time are mandatory
+- Delivery semantics stated (at-least-once → consumers must be idempotent)
 
-## Yasaklar
+## Prohibitions
 
-- Geliştiricinin sözleşmeyi tek taraflı değiştirmesi
-- Aynı kavram için iki farklı şema adı
-- Endpoint'e özel hata formatı
-- Dokümante edilmemiş alan döndürmek
-- Sözleşme ile implementasyon arasında sessiz farklılık
+- A developer changing the contract unilaterally
+- Two different schema names for the same concept
+- An endpoint-specific error format
+- Returning undocumented fields
+- Silent divergence between the contract and the implementation

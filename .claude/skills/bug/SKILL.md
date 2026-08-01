@@ -1,109 +1,109 @@
 ---
 name: bug
-description: Hata kaydı oluşturur ve triage yapar — öncelik, sahip, kök neden hipotezi ve regresyon testi planı. Argümansız çalışırsa açık hataları önceliklendirir.
+description: Creates a bug record and triages it — priority, owner, root-cause hypothesis and regression test plan. Without arguments, prioritizes the open bugs.
 ---
 
-# /bug ["<açıklama>" | triage]
+# /bug ["<description>" | triage]
 
-Sahip: `test-engineer`, önceliklendirme: `qa-lead` (P0/P1 için).
+Owner: `test-engineer`, prioritization: `qa-lead` (for P0/P1).
 
 ---
 
-## Mod A — Yeni hata kaydı: `/bug "<açıklama>"`
+## Mode A — New bug record: `/bug "<description>"`
 
-### 1. Bilgi topla
+### 1. Gather information
 
-`AskUserQuestion` ile eksikleri sor (tek turda):
-- **Nerede görüldü:** `Yerel geliştirme` / `Test ortamı` / `Staging` / `Üretim`
-- **Ne sıklıkla:** `Her seferinde` / `Bazen` / `Bir kez gördüm`
-- **Etki:** `Veri kaybı/güvenlik` / `Ana akış çalışmıyor` / `İkincil akış` / `Kozmetik`
+Ask for the gaps via `AskUserQuestion` (in a single round):
+- **Where was it seen:** `Local development` / `Test environment` / `Staging` / `Production`
+- **How often:** `Every time` / `Sometimes` / `Saw it once`
+- **Impact:** `Data loss/security` / `Main flow broken` / `Secondary flow` / `Cosmetic`
 
-### 2. Numara ve bağlam
+### 2. Number and context
 
-`docs/qa/bugs/` içindeki en büyük numarayı bul, +1.
-Grep ile ilgili REQ ve story'yi bul (hata açıklamasındaki anahtar kelimelerle).
+Find the highest number under `docs/qa/bugs/` and add 1.
+Find the related REQ and story via Grep (using keywords from the bug description).
 
-### 3. `test-engineer` çağır
-
-```
-Hata açıklaması: <argüman>
-Ortam: <cevap> | Sıklık: <cevap> | Etki: <cevap>
-İlgili REQ/story: <bulunanlar>
-İlgili kod: <Grep ile bulunan ilgili bölüm>
-
-Görev: BUG-<NNN> kaydı üret.
-1. Tek cümlelik başlık — GÖZLENEN davranış (yorum değil)
-2. Yeniden üretme adımları — numaralı, kesin, önkoşullarla
-3. Beklenen vs gözlenen
-4. Kök neden hipotezi (en fazla 2) + her biri nasıl doğrulanır
-5. Kapsam: kaç kullanıcı/senaryo etkilenir, geçici çözüm var mı
-6. Öncelik önerisi (P0-P3) + gerekçe
-7. Regresyon testi: düzeltmeden sonra eklenecek testin adı ve ne assert edeceği
-8. Sahip önerisi (hangi geliştirici rolü)
-```
-
-### 4. P0/P1 ise `qa-lead` onayı
+### 3. Invoke `test-engineer`
 
 ```
-<BUG kaydı>
-Görev: Öncelik doğru mu? P0 sprint'i durdurur — emin misin?
-Tek satırda: "Öncelik: P<n> — <gerekçe>"
+Bug description: <argument>
+Environment: <answer> | Frequency: <answer> | Impact: <answer>
+Related REQ/story: <what was found>
+Related code: <the relevant section found via Grep>
+
+Task: produce the BUG-<NNN> record.
+1. A one-sentence title — the OBSERVED behaviour (not an interpretation)
+2. Reproduction steps — numbered, precise, with preconditions
+3. Expected vs observed
+4. Root-cause hypotheses (at most 2) + how each would be confirmed
+5. Scope: how many users/scenarios are affected, is there a workaround
+6. Priority proposal (P0-P3) + rationale
+7. Regression test: the name of the test to add after the fix and what it will assert
+8. Owner proposal (which developer role)
 ```
 
-### 5. Yaz
+### 4. `qa-lead` approval for P0/P1
 
-`docs/qa/bugs/BUG-NNN.md` (format: `test-engineer.md` içindeki şablon)
+```
+<THE BUG RECORD>
+Task: is the priority right? P0 stops the sprint — are you sure?
+One line: "Priority: P<n> — <rationale>"
+```
+
+### 5. Write
+
+`docs/qa/bugs/BUG-NNN.md` (format: the template in `.claude/templates/bug.md`)
 `.state/project.json` → `counters.bugs++`
 
-P0 ise: `delivery-manager`'a bildir, mevcut sprint planına acil satır eklenmeli.
+If it is P0: notify `delivery-manager` — an urgent row must be added to the current sprint plan.
 
 ---
 
-## Mod B — Triage: `/bug triage`
+## Mode B — Triage: `/bug triage`
 
-### 1. Açık hataları topla
+### 1. Collect the open bugs
 
-`docs/qa/bugs/` içindeki `Durum: Açık|Doğrulandı` olanları oku (başlık blokları).
+Read the ones with `Status: Open|Confirmed` under `docs/qa/bugs/` (header blocks only).
 
-### 2. `qa-lead` çağır
-
-```
-Açık hatalar:
-| ID | Başlık | Mevcut öncelik | Ortam | Etki | Yaş |
-
-Mevcut sprint hedefi: <hedef>
-Kalan kapasite: <bilgi>
-
-Görev: Triage.
-1. Öncelikleri gözden geçir — yanlış olanları düzelt ve gerekçelendir
-2. Bu sprintte düzeltilecekler (P0 + P1)
-3. Backlog'a gidecekler (P2) — hangi sprint
-4. Kapatılacaklar (P3, tekrar, geçersiz) — gerekçeli
-5. Küme tespiti: aynı kök nedene işaret eden hatalar var mı
-   (varsa tek düzeltme çoğunu kapatır — bunu belirt)
-```
-
-### 3. Sun ve uygula
+### 2. Invoke `qa-lead`
 
 ```
-## Hata Triage — <N> açık hata
+Open bugs:
+| ID | Title | Current priority | Environment | Impact | Age |
+
+Current sprint goal: <goal>
+Remaining capacity: <information>
+
+Task: triage.
+1. Review the priorities — correct any that are wrong and justify it
+2. What gets fixed this sprint (P0 + P1)
+3. What goes to the backlog (P2) — for which sprint
+4. What gets closed (P3, duplicate, invalid) — with rationale
+5. Cluster detection: do any bugs point to the same root cause
+   (if so, one fix closes several — say so)
+```
+
+### 3. Present and apply
+
+```
+## Bug Triage — <N> open bugs
 P0: <a> | P1: <b> | P2: <c> | P3: <d>
 
-Bu sprintte: BUG-021, BUG-023
-Backlog'a: BUG-019, BUG-020
-Kapatılacak: BUG-015 (tekrar — BUG-012 ile aynı)
+This sprint: BUG-021, BUG-023
+To the backlog: BUG-019, BUG-020
+To be closed: BUG-015 (duplicate — same as BUG-012)
 
-Küme tespiti: BUG-021 ve BUG-023 aynı kök nedene işaret ediyor
-  → tek düzeltme ikisini de kapatabilir
+Cluster detection: BUG-021 and BUG-023 point to the same root cause
+  → a single fix could close both
 ```
 
-`AskUserQuestion` ile onayla, hata dosyalarının durumlarını güncelle,
-sprint'e alınacaklar için `delivery-manager`'a bildir.
+Confirm via `AskUserQuestion`, update the bug files' statuses, and notify
+`delivery-manager` about the ones pulled into the sprint.
 
 ---
 
-## Token notu
+## Token note
 
-- Yeni kayıt: **1-2 agent çağrısı**. Triage: **1 çağrı**.
-- Triage'da hata dosyalarının **başlık bloklarını** gömme, tam içeriği değil.
-- Küme tespiti tek düzeltmeyle çok hata kapatır — en verimli QA hamlesidir.
+- New record: **1-2 agent calls**. Triage: **1 call**.
+- In triage, embed the bug files' **header blocks**, not their full contents.
+- Cluster detection closes many bugs with one fix — the highest-leverage QA move.

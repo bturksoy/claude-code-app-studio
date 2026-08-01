@@ -1,118 +1,119 @@
 # Claude Code App Studio
 
-Bu depo, uygulama (web / mobil / API / kurumsal yazılım) projelerini **uçtan uca**
-yürüten sanal bir yazılım şirketidir. Roller gerçek bir yazılım şirketinin
-organizasyon şemasını taklit eder; her rol bir **agent**, her iş akışı bir
-**skill** (slash komut) olarak tanımlıdır.
+This repository is a virtual software company that runs application projects
+(web / mobile / API / enterprise software) **end to end**. Roles mirror a real
+software organization; each role is an **agent**, each workflow is a **skill**
+(slash command).
 
-> **Bu bir otopilot değildir.** Agent'lar soru sorar, seçenekleri trade-off'larıyla
-> sunar, taslak gösterir ve **yazmadan önce onay ister**. Nihai kararlar kullanıcıya
-> aittir.
+> **This is not autopilot.** Agents ask questions, present options with trade-offs,
+> show drafts, and **request approval before writing**. Final decisions belong to
+> the user.
 
 ---
 
-## Başlarken
+## Getting started
 
-| Durum | Komut |
+| Situation | Command |
 |---|---|
-| Yeni proje | `/kickoff "<proje fikrin>"` |
-| Mevcut kod tabanı var | `/onboard` |
-| Nerede kaldım? | `/status` |
-| Komut listesi | `/help` |
+| New project | `/kickoff "<your project idea>"` |
+| Existing codebase | `/onboard` |
+| Where did I leave off? | `/status` |
+| Command list | `/help` |
 
-Tipik akış:
+Typical flow:
 
 ```
 /kickoff → /discovery → /prd → /requirements → /roadmap
         → /architecture → /ux-flow → /design-system
         → /epics → /stories → /sprint-plan
-        → /dev-task (döngü) → /code-review → /qa-run → /dod-check
+        → /dev-task (loop) → /code-review → /qa-run → /dod-check
         → /release → /retro
 ```
 
 ---
 
-## Anayasa (tüm agent'lar için bağlayıcı)
+## Constitution (binding for every agent)
 
-1. **Tek gerçek kaynağı (SSoT) vardır.** Bir bilgi tek bir dosyada yaşar; diğerleri
-   ona referans verir. Kopyalama yasaktır. Bkz. `.claude/docs/context-protocol.md`.
-2. **Önce oku, sonra yaz.** Dosya yazmadan önce ilgili SSoT dosyaları okunur.
-   Okuma bütçesi aşılamaz (bkz. `.claude/docs/token-budget.md`).
-3. **İzlenebilirlik zorunludur.** Her story bir gereksinime (`REQ-*`), her gereksinim
-   bir hedefe (`GOAL-*`), her teknik seçim bir ADR'ye bağlanır. Bağı olmayan iş yapılmaz.
-4. **Kapsam dışına çıkma.** Agent kendi alanının dışında karar vermez; ilgili role
-   *escalate* eder. Bkz. `.claude/docs/coordination-rules.md`.
-5. **Yazmadan önce onay.** Dosya oluşturma/değiştirme öncesi `AskUserQuestion` ile
-   özet + onay. İstisna: `/dev-task` içinde onaylanmış story kapsamındaki kod.
-6. **Kanıtsız "bitti" yoktur.** Bkz. `.claude/docs/definition-of-done.md`.
-7. **Token disiplini.** Tam dosya okumak yerine `Grep`/`Glob` ile hedefli oku;
-   alt-agent'lar özet döner, transkript dönmez.
+1. **There is one source of truth (SSoT).** A fact lives in exactly one file;
+   everything else references it. Copying is forbidden. See `.claude/docs/context-protocol.md`.
+2. **Read before writing.** Read the relevant SSoT files before writing any file.
+   Read budgets may not be exceeded (see `.claude/docs/token-budget.md`).
+3. **Traceability is mandatory.** Every story links to a requirement (`REQ-*`),
+   every requirement to a goal (`GOAL-*`), every technical choice to an ADR.
+   Work without a link is not done.
+4. **Stay in your lane.** An agent does not decide outside its domain; it *escalates*
+   to the right role. See `.claude/docs/coordination-rules.md`.
+5. **Approval before writing.** Summarize and confirm via `AskUserQuestion` before
+   creating or modifying files. Exception: code within an approved story in `/dev-task`.
+6. **No "done" without evidence.** See `.claude/docs/definition-of-done.md`.
+7. **Token discipline.** Use targeted `Grep`/`Glob` instead of reading whole files;
+   subagents return summaries, never transcripts.
 
 ---
 
-## Kalıcı proje hafızası
+## Persistent project memory
 
-Bu üç dosya her oturumda güncel tutulur ve agent'ların **ilk okuduğu** yerdir:
+These three files are kept current every session and are the **first thing** agents read:
 
-| Dosya | İçerik | Boyut limiti |
+| File | Contents | Size limit |
 |---|---|---|
-| `docs/CONTEXT.md` | Projenin 1 sayfalık beyni: ne, kim için, stack, mevcut faz | 200 satır |
-| `.state/project.json` | Makine-okunur durum: faz, aktif sprint, açık kapılar | — |
-| `docs/DECISIONS.md` | Karar günlüğü (tek satırlık kayıtlar, ADR'lere link) | 300 satır |
+| `docs/CONTEXT.md` | One-page project brain: what, for whom, stack, current phase | 200 lines |
+| `.state/project.json` | Machine-readable state: phase, active sprint, open gates | — |
+| `docs/DECISIONS.md` | Decision log (one-line entries, links to ADRs) | 300 lines |
 
-Bu dosyalar şişerse `/context-compact` çalıştırılır.
+When these grow past their limits, run `/context-compact`.
 
 ---
 
-## Dizin yapısı
+## Directory layout
 
 ```
-product/     Ürün katmanı — brief, PRD, gereksinimler, roadmap, backlog, sprintler
-docs/        Teknik katman — mimari, ADR, API, veri modeli, tasarım, QA, ops
-src/         Uygulama kaynak kodu
-tests/       Test kodu (unit / integration / e2e)
-infra/       IaC, CI/CD, ortam tanımları
-.state/      Proje durum makinesi (JSON)
-.claude/     Agent'lar, skill'ler, kurallar, kapılar, şablonlar
+product/     Product layer — brief, PRD, requirements, roadmap, backlog, sprints
+docs/        Technical layer — architecture, ADRs, API, data model, design, QA, ops
+src/         Application source code
+tests/       Test code (unit / integration / e2e)
+infra/       IaC, CI/CD, environment definitions
+.state/      Project state machine (JSON)
+.claude/     Agents, skills, rules, gates, templates
 ```
 
-Ayrıntı: `.claude/docs/directory-structure.md`
+Details: `.claude/docs/directory-structure.md`
 
 ---
 
-## Roller
+## Roles
 
-**Yönetim** — `ceo`, `cto`
-**Ürün & Planlama** — `product-owner`, `business-analyst`, `solution-architect`, `delivery-manager`
-**Tasarım** — `ux-designer`, `ui-designer`
-**Geliştirme** — `frontend-developer`, `backend-developer`, `sql-developer`, `data-engineer`, `devops-engineer`
-**Kalite** — `qa-lead`, `test-engineer`, `code-reviewer`, `security-engineer`, `performance-engineer`
-**Destek** — `tech-writer`
+**Executive** — `ceo`, `cto`
+**Product & Planning** — `product-owner`, `business-analyst`, `solution-architect`, `delivery-manager`
+**Design** — `ux-designer`, `ui-designer`
+**Engineering** — `frontend-developer`, `backend-developer`, `sql-developer`, `data-engineer`, `devops-engineer`
+**Quality** — `qa-lead`, `test-engineer`, `code-reviewer`, `security-engineer`, `performance-engineer`
+**Support** — `tech-writer`
 
-Tam liste, model atamaları ve yetki sınırları: `.claude/docs/agent-roster.md`
+Full roster, model assignments and authority boundaries: `.claude/docs/agent-roster.md`
 
 ---
 
-## Kalite kapıları ve inceleme modu
+## Quality gates and review mode
 
-Her fazın çıkışında bir **kapı (gate)** vardır — ilgili yönetici agent `ONAY` /
-`ŞARTLI` / `RET` verdiktiyle yanıtlar. Kapı yoğunluğu `product/review-mode.txt`
-ile ayarlanır:
+Every phase ends with a **gate** — the responsible manager agent answers with a
+verdict of `APPROVED` / `CONDITIONAL` / `REJECTED`. Gate intensity is controlled by
+`product/review-mode.txt`:
 
-| Mod | Davranış | Token maliyeti |
+| Mode | Behaviour | Token cost |
 |---|---|---|
-| `full` | Tüm kapılar çalışır (kurumsal / regüle projeler) | Yüksek |
-| `lean` | Sadece faz geçiş kapıları çalışır — **varsayılan** | Orta |
-| `solo` | Kapı yok, tek geliştirici modu | Düşük |
+| `full` | All gates run (enterprise / regulated projects) | High |
+| `lean` | Only phase-transition gates run — **default** | Medium |
+| `solo` | No gates, single-developer mode | Low |
 
-Ayrıntı: `.claude/docs/gates.md`
+Details: `.claude/docs/gates.md`
 
 ---
 
-## Yasaklar
+## Prohibitions
 
-- Kullanıcı onayı olmadan `git push`, deploy, migration çalıştırma
-- `.env`, secret, credential dosyalarına yazma veya içeriğini ekrana basma
-- Gereksinim veya ADR icat etme — kaynak yoksa **sor**
-- Onaylanmamış teknoloji/kütüphane ekleme (ADR gerektirir)
-- Bir agent'ın başka bir agent'ın çıktısını sessizce ezmesi (`/handoff` kullanılır)
+- `git push`, deploy, or running migrations without user approval
+- Writing to `.env`, secret or credential files, or printing their contents
+- Inventing requirements or ADRs — if there is no source, **ask**
+- Adding unapproved technologies or libraries (requires an ADR)
+- One agent silently overwriting another's output (use `/handoff`)

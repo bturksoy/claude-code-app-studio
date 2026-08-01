@@ -1,98 +1,99 @@
 ---
 name: api-contract
-description: OpenAPI sözleşmesini üretir veya günceller. Endpoint'ler, şemalar, hata formatı, sayfalama ve yetkilendirme tek yerde tanımlanır. Frontend ve backend bu sözleşmeyi tüketir, değiştiremez.
+description: Produces or updates the OpenAPI contract. Endpoints, schemas, error format, pagination and authorization are defined in one place. Frontend and backend consume this contract and cannot change it.
 ---
 
-# /api-contract [kapsam]
+# /api-contract [scope]
 
-Sahip: `solution-architect`. Çıktı: `docs/api/openapi.yaml`
+Owner: `solution-architect`. Output: `docs/api/openapi.yaml`
 
-Ön koşul: `ARCHITECTURE.md` + `FRD.md`. Kapsam verilmezse Faz 1 REQ'leri.
+Prerequisite: `ARCHITECTURE.md` + `FRD.md`. Without a scope argument, use the Phase 1 REQs.
 
 ---
 
-## 1. Kapsam belirle
+## 1. Determine the scope
 
-Argüman: epic slug, REQ listesi veya boş (→ mevcut faz).
-Mevcut `openapi.yaml` varsa oku — **ekleme yapılacak**, sıfırdan yazılmayacak.
+Argument: an epic slug, a REQ list, or empty (→ the current phase).
+If `openapi.yaml` already exists, read it — this is an **addition**, not a rewrite.
 
-## 2. `solution-architect` çağır
+## 2. Invoke `solution-architect`
 
 ```
-Mevcut sözleşme: <varsa endpoint listesi — tam YAML değil, sadece path+method+özet>
-Kapsam: <REQ listesi — ID + başlık + aktör + davranış özeti>
-Mimari: <ilgili konteyner ve katman bilgisi>
-İlgili ADR'ler: <uygulama rehberi özetleri — auth, sürümleme, hata formatı>
-Veri modeli: <ilgili varlıklar ve alanları — ER.md'den>
+Existing contract: <if any, the endpoint list — path+method+summary only, not the full YAML>
+Scope: <REQ list — id + title + actor + behaviour summary>
+Architecture: <relevant container and layer information>
+Relevant ADRs: <implementation guidance summaries — auth, versioning, error format>
+Data model: <relevant entities and their fields — from ER.md>
 
-Görev: OpenAPI 3.1 sözleşmesi üret.
+Task: produce an OpenAPI 3.1 contract.
 
-Zorunlu kurallar:
-1. Her endpoint `x-requirement: REQ-*` etiketi taşır
-2. Kaynak odaklı yollar: /orders, /orders/{id}, /orders/{id}/items
-   Fiil kullanma (/getOrders yasak)
-3. Durum kodları: 200/201/204, 400, 401, 403, 404, 409, 422, 429, 500
-   Her endpoint'te hangilerinin geçerli olduğunu tanımla
-4. Hata gövdesi TEK TİP — RFC 7807:
+Mandatory rules:
+1. Every endpoint carries an `x-requirement: REQ-*` tag
+2. Resource-oriented paths: /orders, /orders/{id}, /orders/{id}/items
+   No verbs (/getOrders is forbidden)
+3. Status codes: 200/201/204, 400, 401, 403, 404, 409, 422, 429, 500
+   Declare which ones are valid on each endpoint
+4. ONE error shape — RFC 7807:
    {type, title, status, detail, instance, errors[]}
-   components/responses altında tanımla, her endpoint referans versin
-5. Sayfalama TEK DESEN: cursor veya offset — birini seç, hepsinde kullan
-   Yanıt zarfı: {data: [...], meta: {...}}
-6. Filtreleme ve sıralama parametreleri tutarlı adlandırılır
-7. Kimlik doğrulama: securitySchemes tanımlı, her endpoint'te security belirtilmiş
-   Public endpoint'ler açıkça `security: []`
-8. Yazma işlemleri için idempotency başlığı (uygulanabilirse)
-9. Tüm şemalar components/schemas altında, tekrar yok
-10. Her alan için: tip, format, örnek, zorunluluk, kısıt (min/max/pattern)
-11. Kırıcı değişiklik yapıyorsan BELİRT ve geçiş planı öner
+   Define it under components/responses; every endpoint references it
+5. ONE pagination pattern: cursor or offset — pick one and use it everywhere
+   Response envelope: {data: [...], meta: {...}}
+6. Filtering and sorting parameters are named consistently
+7. Authentication: securitySchemes defined, `security` specified on every endpoint
+   Public endpoints explicitly declare `security: []`
+8. An idempotency header for write operations (where applicable)
+9. All schemas under components/schemas, no duplication
+10. Every field: type, format, example, requiredness, constraints (min/max/pattern)
+11. If you are making a breaking change, SAY SO and propose a migration plan
 
-Çıktıyı geçerli YAML olarak ver. Yorum satırlarıyla REQ eşlemesini açıkla.
+Output valid YAML. Explain the REQ mapping with comments.
 ```
 
-## 3. Tutarlılık denetimi (sen yaparsın, agent çağırmadan)
+## 3. Consistency audit (you do this, no agent)
 
-Üretilen sözleşmeyi şu maddelere karşı kontrol et:
-- Her REQ karşılanmış mı → **kapsama tablosu** çıkar
-- Hata formatı her endpoint'te aynı mı
-- Sayfalama deseni tutarlı mı
-- Yetkilendirme her endpoint'te tanımlı mı
-- Aynı kavram iki farklı şema adıyla mı geçiyor
-- `ER.md` ile alan adları uyumlu mu (uyumsuzsa **veri sözlüğü kazanır**)
+Check the produced contract against these:
+- Is every REQ covered → produce a **coverage table**
+- Is the error format identical on every endpoint
+- Is the pagination pattern consistent
+- Is authorization defined on every endpoint
+- Does the same concept appear under two different schema names
+- Do field names match `ER.md` (on a mismatch, **the data dictionary wins**)
 
-Boşluk varsa tek ve kısa bir düzeltme turu gönder.
+If there are gaps, send one short correction round.
 
-## 4. Sun
+## 4. Present
 
 ```
-## API Sözleşmesi
-| REQ | Endpoint | Method | Auth | Durum kodları |
+## API Contract
+| REQ | Endpoint | Method | Auth | Status codes |
 
-Yeni: <N> endpoint | Değişen: <M> | Kırıcı değişiklik: <var/yok>
-⚠ Karşılanmayan REQ: <varsa>
+New: <N> endpoints | Changed: <M> | Breaking change: <yes/no>
+⚠ Uncovered REQs: <if any>
 ```
 
-Kırıcı değişiklik varsa `AskUserQuestion` ile açıkça onay al ve geçiş planını göster.
+If there is a breaking change, get explicit approval via `AskUserQuestion` and show the
+migration plan.
 
-## 5. Yaz ve dağıt
+## 5. Write and notify
 
 - `docs/api/openapi.yaml`
-- Değişiklik özetini `docs/DECISIONS.md`'ye tek satır
-- **Bildirim:** sözleşme değiştiyse `frontend-developer` ve `backend-developer`
-  sahipli açık story'ler etkilenir — raporda listele
+- One line summarizing the change in `docs/DECISIONS.md`
+- **Notification:** if the contract changed, open stories owned by `frontend-developer`
+  and `backend-developer` are affected — list them in the report
 
-## 6. Kapat
+## 6. Close
 
 ```
-✓ Sözleşme güncellendi → docs/api/openapi.yaml
-  <N> endpoint | Kapsanan REQ: <M>
+✓ Contract updated → docs/api/openapi.yaml
+  <N> endpoints | REQs covered: <M>
 
-▶ Sonraki: /data-model (yapılmadıysa) veya /epics
+▶ Next: /data-model (if not done) or /epics
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **1 agent çağrısı** + en fazla 1 düzeltme turu.
-- Mevcut YAML'ın tamamını gömme — sadece `path + method + özet` listesi.
-- Tutarlılık denetimini model yapar; ayrı bir inceleme agent'ı açma.
+- **1 agent call** + at most 1 correction round.
+- Do not embed the whole existing YAML — a `path + method + summary` list is enough.
+- The consistency audit is done by the model; do not spawn a separate review agent.

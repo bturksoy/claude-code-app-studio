@@ -1,107 +1,108 @@
 ---
 name: perf-check
-description: Performans bütçelerini doğrular. Yük testi çalıştırır, ölçümleri hedeflerle karşılaştırır, darboğazları analiz eder ve regresyon tespiti yapar. PERF-BUDGET kapısını işletir.
+description: Verifies the performance budgets. Runs load tests, compares measurements against targets, analyses bottlenecks and detects regressions. Operates the PERF-BUDGET gate.
 ---
 
-# /perf-check [kapsam]
+# /perf-check [scope]
 
-Sahip: `performance-engineer`. Ölçmeden verdikt verilmez.
+Owner: `performance-engineer`. No verdict without measurement.
 
 ---
 
-## 1. Bütçeleri yükle
+## 1. Load the budgets
 
-`docs/qa/performance/budgets.md` yoksa **önce onu oluştur**:
+If `docs/qa/performance/budgets.md` does not exist, **create it first**:
 
-`performance-engineer` çağır:
+Invoke `performance-engineer`:
 ```
-NFR'ler: <performans/ölçek ile ilgili NFR'lerin tamamı>
-Mimari: <konteynerler, veri katmanı>
-Kritik akışlar: <UX akışlarından en çok kullanılacaklar>
+NFRs: <all performance/scale-related NFRs>
+Architecture: <containers, data layer>
+Critical flows: <the most-used ones from the UX flows>
 
-Görev: Performans bütçe tablosu üret.
-| ID | Metrik | Hedef | Koşul | Ölçüm aracı | Kaynak NFR |
-Her bütçe ölçülebilir ve bağlamlı olmalı. Ölçüm aracını bu projenin
-yığınına uygun seç. Test senaryosu iskeletlerini de ver.
-```
-
-## 2. Ölçüm yap
-
-Sırayla dene (varsa çalıştır, yoksa atla ve **atladığını raporla**):
-
-```
-Yük testi   : tests/performance/ altındaki senaryolar (k6, artillery, locust)
-Frontend    : lighthouse CI, bundle analyzer
-Veritabanı  : kritik sorgular için EXPLAIN ANALYZE
-Bellek/CPU  : varsa container/proses metrikleri
+Task: produce the performance budget table.
+| ID | Metric | Target | Condition | Tool | Source NFR |
+Every budget must be measurable and contextual. Pick a measurement tool suited to
+this project's stack. Also provide the test scenario skeletons.
 ```
 
-Çalıştıramadıklarını **açıkça belirt**. "Muhtemelen yeterlidir" yazma.
+## 2. Measure
 
-## 3. `performance-engineer` çağır
-
-```
-Bütçeler: <budgets.md tablosu>
-Önceki ölçüm: <docs/qa/performance/ son run — karşılaştırma temeli>
-
-BU TURUN ÖLÇÜMLERİ:
-<gerçek çıktılar — kırpma>
-
-Ölçülemeyenler: <liste + neden>
-
-İlgili kod (şüpheli alanlar):
-<Grep ile bulunan: N+1 deseni, döngü içi sorgu, senkron dış çağrı,
- sınırsız sonuç kümesi>
-
-Görev: PERF-BUDGET kapısı.
-1. Bütçe karşılaştırma tablosu: | ID | Hedef | Ölçülen | Durum | Önceki | Değişim |
-2. Regresyon var mı (önceki turdan kötüleşme)
-3. Aşılan bütçeler için darboğaz analizi:
-   nerede, kanıt (ölçüm satırı), neden, düzeltme önerisi, tahmini kazanç
-4. Ölçülemeyen bütçeler için: nasıl ölçülür (somut komut/araç)
-
-Kural: Ölçmeden optimizasyon önerme. Amdahl'ı uygula — toplam sürenin %5'ini
-alan şeyi önerme.
-Yanıtına "PERF-BUDGET: ONAY|ŞARTLI|RET" satırıyla başla.
-Ölçüm yapılmamışsa otomatik RET.
-```
-
-## 4. Sun
+Try these in order (run what exists; **report what you skipped**):
 
 ```
-## Performans — <tarih> — <build>
-Verdikt: PERF-BUDGET <verdikt>
+Load test  : scenarios under tests/performance/ (k6, artillery, locust)
+Frontend   : lighthouse CI, bundle analyzer
+Database   : EXPLAIN ANALYZE on critical queries
+Memory/CPU : container/process metrics, if available
+```
 
-| Bütçe | Hedef | Ölçülen | Durum | Önceki | Değişim |
+State explicitly what you could not run. Never write "it is probably fine".
+
+## 3. Invoke `performance-engineer`
+
+```
+Budgets: <the budgets.md table>
+Previous run: <the last run under docs/qa/performance/ — the comparison baseline>
+
+THIS RUN'S MEASUREMENTS:
+<the real output — do not truncate>
+
+Not measured: <list + why>
+
+Related code (suspect areas):
+<found via Grep: N+1 patterns, queries inside loops, synchronous external calls,
+ unbounded result sets>
+
+Task: the PERF-BUDGET gate.
+1. Budget comparison table: | ID | Target | Measured | Status | Previous | Change |
+2. Is there a regression (a degradation since the previous run)
+3. Bottleneck analysis for exceeded budgets:
+   where, evidence (the measurement line), why, proposed fix, estimated gain
+4. For unmeasured budgets: how to measure them (a concrete command/tool)
+
+Rule: do not propose optimization without measurement. Apply Amdahl's law — do not
+propose changes to something that takes 5% of total time.
+Begin your reply with "PERF-BUDGET: APPROVED|CONDITIONAL|REJECTED".
+If no measurement was taken, that is an automatic REJECTED.
+```
+
+## 4. Present
+
+```
+## Performance — <date> — <build>
+Verdict: PERF-BUDGET <verdict>
+
+| Budget | Target | Measured | Status | Previous | Change |
 | PB-01 | <300ms | 245ms | ✓ | 260ms | -6% |
 | PB-03 | <200KB | 340KB | ✗ | 310KB | +10% ⚠ |
 
-Regresyon: <varsa>
-Ölçülemeyen: <liste>
+Regression: <if any>
+Not measured: <list>
 
-Darboğazlar
-| # | Nerede | Kanıt | Öneri | Tahmini kazanç |
+Bottlenecks
+| # | Where | Evidence | Recommendation | Estimated gain |
 ```
 
-## 5. Aksiyon
+## 5. Action
 
-Aşılan bütçeler için `AskUserQuestion`:
-- `Darboğazları düzelt (story aç)`
-- `Bütçeyi gözden geçir — hedef gerçekçi değilmiş`
-- `Risk olarak kabul et`
+For exceeded budgets, `AskUserQuestion`:
+- `Fix the bottlenecks (open stories)`
+- `Revisit the budget — the target was unrealistic`
+- `Accept as risk`
 
-Düzeltme seçilirse backlog'a story olarak ekle (`delivery-manager`'a bildir).
+If a fix is chosen, add it to the backlog as a story (notify `delivery-manager`).
 
-## 6. Kaydet
+## 6. Record
 
-- `docs/qa/performance/run-<tarih>.md`
+- `docs/qa/performance/run-<date>.md`
 - `.state/gates.jsonl` → PERF-BUDGET
-- Kabul edilen aşımlar → `product/risks.md`
+- Accepted overruns → `product/risks.md`
 
 ---
 
-## Token notu
+## Token note
 
-- Ölçüm **bedava** (Bash). Agent sadece analiz için çağrılır.
-- Tüm bütçeler geçtiyse ve regresyon yoksa: agent çağırmadan `ONAY` raporla.
-- Ölçüm çıktılarını kırpmadan göm — analizin tüm değeri veride.
+- Measurement is **free** (Bash). The agent is invoked only for the analysis.
+- If every budget passes and there is no regression, report `APPROVED` **without
+  invoking an agent**.
+- Embed measurement output without truncating — the analysis is only as good as the data.

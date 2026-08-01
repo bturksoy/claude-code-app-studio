@@ -1,138 +1,140 @@
 ---
 name: onboard
-description: Mevcut bir kod tabanını App Studio sistemine alır. Kodu analiz edip CONTEXT.md, mimari taslağı, teknik borç listesi ve geriye dönük gereksinim taslağı üretir. Brownfield projeler için giriş noktası.
+description: Brings an existing codebase into the App Studio system. Analyses the code and produces CONTEXT.md, a draft architecture, a technical debt list and reverse-engineered requirements. The entry point for brownfield projects.
 ---
 
 # /onboard
 
-Sahip: `solution-architect`. Çıktı: `docs/CONTEXT.md`, `ARCHITECTURE.md` taslağı,
-teknik borç listesi, `.state/project.json`.
+Owner: `solution-architect`. Outputs: `docs/CONTEXT.md`, a draft `ARCHITECTURE.md`,
+a technical debt list, `.state/project.json`.
 
 ---
 
-## 1. Hızlı keşif (bedava — agent'ın arama yapmasını önler)
+## 1. Quick reconnaissance (free — stops the agent from having to search)
 
-Glob ve Grep ile şunları topla (dosya içeriği okuma, sadece varlık ve yapı):
-
-```
-Dil/yığın işaretleri : package.json, requirements.txt, *.csproj, go.mod, pom.xml,
-                       Gemfile, composer.json, Cargo.toml
-Yapı                 : üst seviye dizinler (2 seviye derinlik)
-Giriş noktaları      : main.*, index.*, app.*, Program.cs, server.*
-Yapılandırma         : *.config.*, .env.example, appsettings*.json
-Test                 : test/ spec/ __tests__/ — dosya sayısı
-Veritabanı           : migrations/, schema.sql, models/, entities/
-CI/CD                : .github/workflows/, .gitlab-ci.yml, Jenkinsfile, Dockerfile
-Dokümantasyon        : README, docs/, ADR izleri
-Bağımlılık sayısı    : manifest dosyasından
-Kod hacmi            : dosya sayısı ve yaklaşık satır (Glob sayımı)
-```
-
-Git varsa: `git log --oneline -20`, katkıda bulunan sayısı, son commit tarihi.
-
-## 2. `solution-architect` çağır
+Collect the following with Glob and Grep (do not read file contents; check existence and
+structure only):
 
 ```
-KEŞİF ÇIKTISI:
-<yukarıda toplanan yapılandırılmış bilgi>
-
-ANA DOSYA İÇERİKLERİ:
-<package.json / manifest dosyası — tam>
-<giriş noktası dosyası — tam>
-<README — varsa, tam>
-<varsa migration/schema dosya adları>
-
-Görev: Bu kod tabanını haritalandır.
-
-1. Yığın tespiti: dil, framework, veritabanı, altyapı — sürümleriyle
-2. Mimari desen: katmanlı mı, modüler mi, monolit mi, mikroservis mi
-   Bağımlılık yönü kuralı var mı, uygulanıyor mu
-3. Bileşen haritası: ana modüller ve sorumlulukları (C4-2 seviyesi)
-4. Veri modeli: hangi varlıklar var (dosya/klasör adlarından çıkarım)
-5. Test durumu: hangi seviyeler var, kaba kapsam tahmini
-6. Teknik borç sinyalleri:
-   - Eski/bakımsız bağımlılıklar
-   - Test boşlukları
-   - Yapılandırma/secret yönetimi sorunları
-   - Mimari tutarsızlıklar
-   - Eksik dokümantasyon
-7. Bilinmeyenler: koddan çıkaramadığın, kullanıcıya sorulması gerekenler
-
-Kural: Emin olmadığın şeyi "TAHMİN:" olarak işaretle.
-Ek dosya okuman gerekiyorsa hangi dosya olduğunu SÖYLE, listele — kendin
-geniş tarama yapma.
+Stack signals    : package.json, requirements.txt, *.csproj, go.mod, pom.xml,
+                   Gemfile, composer.json, Cargo.toml
+Structure        : top-level directories (2 levels deep)
+Entry points     : main.*, index.*, app.*, Program.cs, server.*
+Configuration    : *.config.*, .env.example, appsettings*.json
+Tests            : test/ spec/ __tests__/ — file count
+Database         : migrations/, schema.sql, models/, entities/
+CI/CD            : .github/workflows/, .gitlab-ci.yml, Jenkinsfile, Dockerfile
+Documentation    : README, docs/, traces of ADRs
+Dependency count : from the manifest file
+Code volume      : file count and approximate line count (Glob counting)
 ```
 
-Agent belirli dosyalar isterse **onları oku ve tek bir ikinci turda** gönder.
-En fazla bir ek tur.
+If git is present: `git log --oneline -20`, contributor count, last commit date.
 
-## 3. Kullanıcıya sorular
-
-Agent'ın "Bilinmeyenler" listesinden `AskUserQuestion` ile sor (en fazla 4):
-- Bu projenin amacı / kullanıcısı kim?
-- Hangi aşamada (üretimde mi, geliştirme mi)?
-- Bilinen en büyük sorun ne?
-- App Studio'yu ne için kullanmak istiyorsun: `Yeni özellik ekleme` /
-  `Refactor / borç ödeme` / `Dokümantasyon çıkarma` / `Kalite artırma`
-
-## 4. Sun
+## 2. Invoke `solution-architect`
 
 ```
-## Kod Tabanı Analizi
+RECONNAISSANCE OUTPUT:
+<the structured information collected above>
 
-Yığın: <dil> <framework> | <veritabanı> | <altyapı>
-Hacim: ~<N> dosya, <M> bağımlılık
-Mimari: <desen> — <tutarlılık değerlendirmesi>
+KEY FILE CONTENTS:
+<package.json / manifest file — full>
+<entry point file — full>
+<README — if present, full>
+<migration/schema file names, if any>
 
-Bileşenler
-| Modül | Sorumluluk | Durum |
+Task: map this codebase.
 
-Test: <seviyeler> — kaba kapsam <tahmin>
-CI/CD: <var/yok — ne yapıyor>
+1. Stack detection: language, framework, database, infrastructure — with versions
+2. Architectural pattern: layered, modular, monolith, microservices?
+   Is there a dependency direction rule, and is it enforced?
+3. Component map: main modules and their responsibilities (C4-2 level)
+4. Data model: which entities exist (inferred from file/folder names)
+5. Test situation: which levels exist, a rough coverage estimate
+6. Technical debt signals:
+   - Outdated/unmaintained dependencies
+   - Test gaps
+   - Configuration/secret management problems
+   - Architectural inconsistencies
+   - Missing documentation
+7. Unknowns: what you could not infer from the code and must be asked of the user
 
-Teknik borç (öncelik sırasıyla)
-| # | Borç | Etki | Tahmini maliyet |
-
-Bilinmeyenler: <kullanıcıya sorulanlar>
-TAHMİN işaretli maddeler: <n> — doğrulanmalı
+Rule: mark anything you are not sure about as "GUESS:".
+If you need to read additional files, SAY which ones and list them — do not perform
+a broad scan yourself.
 ```
 
-## 5. Yaz
+If the agent requests specific files, **read them and send them in a single second round**.
+At most one additional round.
 
-- `docs/CONTEXT.md` — şablonu doldur, bilinmeyenleri `<doğrulanmalı>` işaretle
-- `docs/architecture/ARCHITECTURE.md` — **taslak** (durum: "Tersine mühendislik —
-  doğrulanmadı" notuyla)
-- `product/risks.md` — teknik borç maddeleri risk olarak
-- `.state/project.json` — `phase: "operate"` veya kullanıcının seçtiği amaca göre
-- Eksik `.claude/` dizin yapısını kur (`/kickoff` adım 6'daki dizinler)
+## 3. Questions for the user
 
-## 6. Sonraki adımı öner
+From the agent's "Unknowns" list, ask via `AskUserQuestion` (at most 4):
+- What is this project for / who are its users?
+- What stage is it at (in production, in development)?
+- What is the biggest known problem?
+- What do you want to use App Studio for: `Adding new features` /
+  `Refactoring / paying down debt` / `Producing documentation` / `Raising quality`
 
-Kullanıcının amacına göre:
+## 4. Present
 
-| Amaç | Sonraki |
+```
+## Codebase Analysis
+
+Stack: <language> <framework> | <database> | <infrastructure>
+Volume: ~<N> files, <M> dependencies
+Architecture: <pattern> — <consistency assessment>
+
+Components
+| Module | Responsibility | State |
+
+Tests: <levels> — rough coverage <estimate>
+CI/CD: <present/absent — what it does>
+
+Technical debt (in priority order)
+| # | Debt | Impact | Estimated cost |
+
+Unknowns: <what was asked of the user>
+Items marked GUESS: <n> — these need verification
+```
+
+## 5. Write
+
+- `docs/CONTEXT.md` — fill in the template, mark unknowns as `<to be verified>`
+- `docs/architecture/ARCHITECTURE.md` — a **draft** (with the note
+  "Reverse-engineered — not verified")
+- `product/risks.md` — the technical debt items as risks
+- `.state/project.json` — `phase: "operate"` or according to the user's chosen purpose
+- Create any missing `.claude/` directory structure (the directories from `/kickoff` step 6)
+
+## 6. Suggest the next step
+
+Based on the user's purpose:
+
+| Purpose | Next |
 |---|---|
-| Yeni özellik ekleme | `/prd` (sadece yeni özellik için) → `/epics` → `/stories` |
-| Refactor / borç ödeme | `/architecture` (hedef mimari) → `/adr` → `/epics` |
-| Dokümantasyon | `/api-contract` (mevcut koddan) → `/data-model` |
-| Kalite artırma | `/test-plan` → `/qa-run` → `/security-review` |
+| Adding new features | `/prd` (for the new feature only) → `/epics` → `/stories` |
+| Refactoring / debt | `/architecture` (target architecture) → `/adr` → `/epics` |
+| Documentation | `/api-contract` (from the existing code) → `/data-model` |
+| Raising quality | `/test-plan` → `/qa-run` → `/security-review` |
 
 ```
-✓ Kod tabanı sisteme alındı.
-  docs/CONTEXT.md ve mimari taslağı hazır.
+✓ The codebase is now in the system.
+  docs/CONTEXT.md and the draft architecture are ready.
 
-⚠ Mimari doküman TERSİNE MÜHENDİSLİKTİR — doğrulanmadı.
-  <n> madde TAHMİN olarak işaretli.
+⚠ The architecture document is REVERSE-ENGINEERED — it has not been verified.
+  <n> items are marked as GUESS.
 
-▶ Sonraki: <amaca göre komut>
+▶ Next: <the command matching the purpose>
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- Keşif adımı **bedava** ve agent'ın kör arama yapmasını önler — en kritik tasarruf.
-- **1-2 agent çağrısı.**
-- Tüm kaynak kodu okuma. Manifest + giriş noktası + README yeter;
-  gerisi agent'ın talebi üzerine hedefli.
-- Büyük kod tabanlarında modül modül ilerle, hepsini birden haritalandırma.
+- The reconnaissance step is **free** and stops the agent from searching blindly —
+  the most critical saving here.
+- **1-2 agent calls.**
+- Do not read all the source code. The manifest, entry point and README are enough;
+  anything further is targeted and only on the agent's request.
+- For large codebases, proceed module by module rather than mapping everything at once.

@@ -1,131 +1,131 @@
 ---
 name: hotfix
-description: Üretimdeki acil sorunu hızlı yoldan çözer — etki analizi, kök neden, minimum düzeltme, regresyon testi ve hızlandırılmış yayın. Normal sprint akışını atlar ama kaliteyi atlamaz.
+description: Resolves an urgent production issue on a fast path — impact analysis, root cause, minimal fix, regression test and expedited release. Skips the normal sprint flow but not the quality bar.
 ---
 
-# /hotfix "<sorun>"
+# /hotfix "<issue>"
 
-Koordinasyon: `delivery-manager`. **Hızlı yol, kestirme yol değil.**
+Coordination: `delivery-manager`. **A fast path, not a shortcut.**
 
 ---
 
-## 1. Etki tespiti (önce bu — agent çağırmadan)
+## 1. Impact assessment (first — no agent)
 
-`AskUserQuestion` ile tek turda sor:
-- **Şu an ne oluyor:** `Sistem tamamen çalışmıyor` / `Ana akış bozuk` /
-  `Bazı kullanıcılar etkileniyor` / `Veri bozuluyor veya sızıyor`
-- **Ne zaman başladı:** `Son deploy'dan sonra` / `Kademeli olarak` / `Bilinmiyor`
-- **Geçici çözüm var mı:** `Var, kullanıcılara duyurulabilir` / `Yok`
+Ask in a single round via `AskUserQuestion`:
+- **What is happening right now:** `System completely down` / `Main flow broken` /
+  `Some users affected` / `Data being corrupted or leaked`
+- **When did it start:** `After the last deploy` / `Gradually` / `Unknown`
+- **Is there a workaround:** `Yes, it can be announced to users` / `No`
 
-**Veri bozulması veya güvenlik sızıntısı ise:** önce **durdurma** önlemini öner
-(özelliği kapat, trafiği kes, erişimi kısıtla) — düzeltmeden önce kanamayı durdur.
+**If it is data corruption or a security leak:** first propose a **containment** measure
+(turn the feature off, cut traffic, restrict access) — stop the bleeding before fixing.
 
-## 2. Kök neden analizi
+## 2. Root cause analysis
 
-Son deploy'dan sonra başladıysa: değişiklikleri incele (`git log`, son sürüm notu).
+If it started after the last deploy, review the changes (`git log`, the last release note).
 
-İlgili geliştirici agent'ı çağır (etkilenen alana göre):
-
-```
-ACİL — üretim sorunu.
-Belirti: <sorun>
-Etki: <cevap>
-Başlangıç: <cevap>
-Son değişiklikler: <git log --oneline son 10 veya sürüm notu>
-İlgili kod: <Grep ile bulunan ilgili bölüm>
-Loglar/hata: <varsa kullanıcının verdiği>
-
-Görev:
-1. En olası 2 kök neden hipotezi + her birinin nasıl DOĞRULANACAĞI
-2. MİNİMUM düzeltme — sorunu çözen en küçük değişiklik.
-   Refactor YAPMA, iyileştirme YAPMA, sadece kanamayı durdur.
-3. Bu düzeltmenin yan etkileri
-4. Geri alma seçeneği düzeltmeden daha güvenli mi? Dürüst cevap ver.
-5. Düzeltmeyi doğrulayacak test (önce başarısız olmalı)
-
-Kısa ve hızlı ol.
-```
-
-## 3. Geri alma vs ileri düzeltme
-
-Agent "geri alma daha güvenli" derse **kullanıcıya sun**:
+Invoke the relevant developer agent (based on the affected area):
 
 ```
-Seçenek A — Geri al (rollback)
-  Süre: <hızlı> | Risk: <düşük> | Yan etki: <son sürümün özellikleri kaybolur>
-Seçenek B — İleri düzelt (hotfix)
-  Süre: <daha uzun> | Risk: <orta> | Yan etki: <...>
+URGENT — production issue.
+Symptom: <issue>
+Impact: <answer>
+Started: <answer>
+Recent changes: <git log --oneline of the last 10, or the release note>
+Related code: <the relevant section found via Grep>
+Logs/errors: <whatever the user provided>
 
-Öneri: <A veya B> — <gerekçe>
+Task:
+1. The 2 most likely root-cause hypotheses + how each would be CONFIRMED
+2. The MINIMAL fix — the smallest change that resolves the issue.
+   Do NOT refactor, do NOT improve, just stop the bleeding.
+3. Side effects of this fix
+4. Is rolling back safer than fixing forward? Answer honestly.
+5. A test that verifies the fix (it must fail first)
+
+Be brief and fast.
 ```
 
-## 4. Düzeltmeyi uygula ve doğrula
+## 3. Rollback vs roll forward
 
-1. **Önce başarısız olan testi yaz** (regresyon testi) — istisna yok
-2. Düzeltmeyi uygula
-3. Testi çalıştır — artık geçmeli
-4. Regresyon paketini çalıştır — başka bir şeyi kırmadığını doğrula
+If the agent says rollback is safer, **present it to the user**:
 
-## 5. Hızlandırılmış inceleme
+```
+Option A — Roll back
+  Time: <fast> | Risk: <low> | Side effect: <the last release's features are lost>
+Option B — Roll forward (hotfix)
+  Time: <longer> | Risk: <medium> | Side effect: <...>
 
-`code-reviewer` çağır — **sadece BLOKE seviyesi**:
+Recommendation: <A or B> — <rationale>
+```
+
+## 4. Apply and verify the fix
+
+1. **Write the failing test first** (the regression test) — no exceptions
+2. Apply the fix
+3. Run the test — it must now pass
+4. Run the regression suite — confirm nothing else broke
+
+## 5. Expedited review
+
+Invoke `code-reviewer` — **BLOCKER level only**:
 
 ```
 <DIFF>
-Görev: ACİL hotfix incelemesi. Sadece şunlara bak:
-1. Düzeltme sorunu gerçekten çözüyor mu
-2. Yeni hata/güvenlik açığı getiriyor mu
-3. Kapsam minimum mu (gereksiz değişiklik var mı)
-Sadece BLOKE seviyesi bulgu ver. Stil ve iyileştirme yazma.
-"CR-CODE: ONAY|RET" ile başla.
+Task: URGENT hotfix review. Look only at:
+1. Does the fix actually resolve the issue
+2. Does it introduce a new bug or vulnerability
+3. Is the scope minimal (are there unnecessary changes)
+Report only BLOCKER-level findings. Do not write style or improvement notes.
+Begin with "CR-CODE: APPROVED|REJECTED".
 ```
 
-## 6. Yayın
+## 6. Release
 
-`devops-engineer` çağır:
+Invoke `devops-engineer`:
 ```
-Hotfix: <özet>
-Değişen: <dosyalar>
-Görev: Hızlandırılmış yayın planı.
-1. Deploy adımları (minimum, sadece bu değişiklik)
-2. Geri alma adımı (hotfix'in kendisi geri alınabilir olmalı)
-3. Yayın sonrası doğrulama: ilk 15 dakikada hangi metrik izlenecek
+Hotfix: <summary>
+Changed: <files>
+Task: an expedited release plan.
+1. Deploy steps (minimal, only this change)
+2. Rollback step (the hotfix itself must be reversible)
+3. Post-release verification: which metrics to watch in the first 15 minutes
 ```
 
-Deploy'u **çalıştırma** — komutu göster, kullanıcı çalıştırsın.
+Do **not** execute the deploy — show the command, let the user run it.
 
-## 7. Kayıt ve takip
+## 7. Record and follow-up
 
-- `docs/qa/bugs/BUG-NNN.md` — hata kaydı (geriye dönük oluştur)
-- `CHANGELOG.md` — PATCH sürüm girdisi
-- `docs/ops/release-<sürüm>.md` — hotfix yayın kaydı
-- `product/risks.md` — bu sorunun tekrar etmemesi için ne gerekiyor
+- `docs/qa/bugs/BUG-NNN.md` — the bug record (created retroactively)
+- `CHANGELOG.md` — a PATCH version entry
+- `docs/ops/release-<version>.md` — the hotfix release record
+- `product/risks.md` — what is needed so this does not recur
 
-**Zorunlu takip:** Hotfix bir açığı gösterdi. Backlog'a story ekle:
-- Neden testler yakalamadı → test boşluğu
-- Neden inceleme yakalamadı → kontrol listesi boşluğu
-- Neden izleme uyarmadı → alarm boşluğu
+**Mandatory follow-up:** the hotfix exposed a gap. Add stories to the backlog:
+- Why the tests did not catch it → test gap
+- Why the review did not catch it → checklist gap
+- Why monitoring did not warn → alerting gap
 
-## 8. Kapat
+## 8. Close
 
 ```
-✓ Hotfix uygulandı: <özet>
-  Kök neden: <tek cümle>
-  Regresyon testi: <dosya> ✓
-  İnceleme: CR-CODE <verdikt>
+✓ Hotfix applied: <summary>
+  Root cause: <one sentence>
+  Regression test: <file> ✓
+  Review: CR-CODE <verdict>
 
-⚠ Deploy komutu ÇALIŞTIRILMADI — hazır olduğunda sen çalıştır.
+⚠ The deploy command was NOT run — run it yourself when ready.
 
-Takip story'leri backlog'a eklendi:
-  - <test/inceleme/izleme boşluğu>
+Follow-up stories added to the backlog:
+  - <test/review/monitoring gap>
 
-▶ Sonraki: yayın sonrası doğrulama → /retro (bu olay için)
+▶ Next: post-release verification → /retro (for this incident)
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **3 agent çağrısı** (geliştirici + inceleyici + devops). Hızlı yol, dar kapsam.
-- Etki tespiti kullanıcıya sorulur — bedava ve en kritik bilgi.
-- İnceleme kapsamı bilinçli olarak dar: sadece BLOKE.
+- **3 agent calls** (developer + reviewer + devops). Fast path, narrow scope.
+- Impact assessment goes to the user — free and the most critical information.
+- The review scope is deliberately narrow: BLOCKER only.

@@ -1,96 +1,97 @@
-# Test Kod Kuralları
+# Test Code Rules
 
-**Kapsam:** `tests/**`, `**/*.test.*`, `**/*.spec.*`, `**/__tests__/**`
+**Scope:** `tests/**`, `**/*.test.*`, `**/*.spec.*`, `**/__tests__/**`
 
 ---
 
-## Adlandırma
+## Naming
 
-Test adı ne test ettiğini söyler ve kabul kriterine bağlanır:
+The test name states what it tests and links to an acceptance criterion:
 
 ```
-✓ AC-2_stoktan_fazla_siparişte_409_döner
-✓ boş_liste_gönderildiğinde_400_ve_alan_hatası_döner
+✓ AC-2_order_exceeding_stock_returns_409
+✓ empty_list_submission_returns_400_with_field_error
 ✗ test_order_1
 ✗ should work
 ```
 
-Dosya: `tests/<katman>/<alan>/<slug>.test.<ext>`
+File: `tests/<layer>/<area>/<slug>.test.<ext>`
 
-## Yapı
+## Structure
 
 ```
 Given (Arrange) → When (Act) → Then (Assert)
 ```
 
-- Bir test **bir davranışı** doğrular
-- Assert olmadan test yoktur. "Hata fırlatmadı" bir assert değildir
-- Assert **spesifik** olur: `expect(res.status).toBe(409)` — `toBeTruthy()` değil
+- One test verifies **one behaviour**
+- No assertion, no test. "It did not throw" is not an assertion
+- Assertions are **specific**: `expect(res.status).toBe(409)` — not `toBeTruthy()`
 
-## Bağımsızlık
+## Independence
 
-- Testler **sıralamadan etkilenmez**; tek başına da, paralel de çalışır
-- Her test kendi verisini kurar ve temizler
-- Paylaşılan mutable state yasak
-- Global `beforeAll` ile veri kurup testler arası paylaşma
+- Tests are **order-insensitive**; they run alone and in parallel
+- Each test sets up and tears down its own data
+- Shared mutable state is forbidden
+- Do not set up data in a global `beforeAll` and share it across tests
 
-## Determinizm
+## Determinism
 
-- `sleep` yerine koşullu bekleme (`waitFor`, polling with timeout)
-- Tarih/saat enjekte edilebilir kaynaktan (sabit tarih kullan)
-- Rastgelelik sabit tohumla (seed)
-- Dış ağ çağrısı **yasak** — mock veya test double
-- Kırılgan (flaky) test derhal karantinaya alınır ve nedeni araştırılır.
-  **Retry ile gizlenmez**
+- Conditional waiting (`waitFor`, polling with timeout) instead of `sleep`
+- Date/time from an injectable source (use a fixed date)
+- Randomness with a fixed seed
+- External network calls are **forbidden** — use mocks or test doubles
+- A flaky test is quarantined immediately and its cause investigated.
+  **Never hidden behind a retry**
 
-## Kapsam
+## Coverage
 
-Her `AC-N` için en az bir test. Ek olarak sınır durumları:
+At least one test per `AC-N`. In addition, edge cases:
 
 ```
-boş / null / undefined
-sıfır / negatif / maksimum
-tek eleman / çok eleman
-eşzamanlı çağrı
-tekrar çağrı (idempotency)
-geçersiz tip / format
-yetkisiz erişim
+empty / null / undefined
+zero / negative / maximum
+single element / many elements
+concurrent calls
+repeated calls (idempotency)
+invalid type / format
+unauthorized access
 ```
 
-Mutlu yol bir test, sınırlar üç test. Sadece mutlu yol yazan story DONE olmaz.
+The happy path is one test; boundaries are three. A story with only a happy-path test
+is not DONE.
 
-## Test seviyeleri
+## Test levels
 
-| Seviye | Ne test eder | Ne kullanmaz |
+| Level | What it tests | What it does not use |
 |---|---|---|
-| Unit | Saf mantık, iş kuralı | Veritabanı, ağ, dosya sistemi |
-| Integration | Bileşen etkileşimi, gerçek DB, API sözleşmesi | Dış üçüncü parti servisler |
-| E2E | Kritik kullanıcı yolculuğu (≤8 senaryo) | — |
+| Unit | Pure logic, business rules | Database, network, filesystem |
+| Integration | Component interaction, real DB, API contract | External third-party services |
+| E2E | Critical user journeys (≤8 scenarios) | — |
 
-## E2E disiplini
+## E2E discipline
 
-- **En fazla 8 senaryo** — sadece paraya dokunan yolculuklar
-- Seçici: `data-testid` veya erişilebilir rol/etiket. CSS sınıfı veya metin **kullanma**
-- Her senaryo kendi kullanıcısını ve verisini oluşturur
-- E2E'de birim mantık test etme — orası unit testin işi
+- **At most 8 scenarios** — only journeys that touch money
+- Selectors: `data-testid` or an accessible role/label. **Never** CSS classes or text
+- Each scenario creates its own user and data
+- Do not test unit-level logic in E2E — that is the unit test's job
 
-## Mock kullanımı
+## Mock usage
 
-- Sahip olduğun kodu mock'lama; sınırları mock'la (dış servis, saat, rastgelelik)
-- Aşırı mock'lanmış test, implementasyonu test eder — davranışı değil
-- Mock doğrulaması (`toHaveBeenCalledWith`) davranış assert'inin yerini tutmaz
+- Do not mock code you own; mock boundaries (external services, clock, randomness)
+- An over-mocked test tests the implementation, not the behaviour
+- Mock verification (`toHaveBeenCalledWith`) does not replace a behavioural assertion
 
-## Test verisi
+## Test data
 
-- Fabrika/builder deseni: `createOrder({status: 'paid'})` — sadece ilgili alanı belirt
-- Sihirli değer yerine anlamlı isim: `EXPIRED_TOKEN`, `MAX_QUANTITY`
-- Fixture'lar testin yanında yaşar, uzak bir klasörde değil
+- Factory/builder pattern: `createOrder({status: 'paid'})` — specify only what matters
+- Meaningful names instead of magic values: `EXPIRED_TOKEN`, `MAX_QUANTITY`
+- Fixtures live next to the test, not in a distant folder
 
-## Yasaklar
+## Prohibitions
 
-- Commit'lenmiş `skip` / `only` / `xit` / `fdescribe`
-- Assert'i yorum satırına alınmış test
-- Testi geçirmek için assert gevşetmek
-- Üretim verisi kullanmak
-- Testte `console.log` bırakmak
-- Zaman aşımı süresini "geçsin diye" artırmak (kök nedeni bul)
+- Committed `skip` / `only` / `xit` / `fdescribe`
+- A test with its assertion commented out
+- Loosening an assertion to make a test pass
+- Using production data
+- Leaving `console.log` in a test
+- Raising the timeout "so it passes" (find the root cause)

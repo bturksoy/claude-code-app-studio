@@ -1,43 +1,42 @@
-# Bağlam Protokolü — Tek Gerçek Kaynağı (SSoT) Haritası
+# Context Protocol — Single Source of Truth (SSoT) Map
 
-Her bilgi **tek bir dosyada** yaşar. Aşağıdaki tablo, hangi bilginin nerede
-tutulduğunu ve kimin yazma yetkisi olduğunu tanımlar. Bir agent bilgiyi
-başka yerde tekrarlarsa bu bir **hatadır**.
+Every fact lives in **exactly one file**. The table below defines where each fact is
+stored and who may write it. If an agent duplicates a fact elsewhere, that is a **defect**.
 
 ---
 
-## SSoT tablosu
+## SSoT table
 
-| Bilgi | Dosya | Sahibi | Okuyanlar |
+| Fact | File | Owner | Readers |
 |---|---|---|---|
-| İş hedefi, başarı metriği | `product/00-brief.md` | `ceo` | herkes |
-| Ürün kapsamı, özellik listesi, öncelik | `product/prd/PRD.md` | `product-owner` | herkes |
-| Fonksiyonel gereksinimler (`REQ-*`) | `product/requirements/FRD.md` | `business-analyst` | tasarım, geliştirme, QA |
-| Fonksiyonel olmayan gereksinimler (`NFR-*`) | `product/requirements/NFR.md` | `business-analyst` | mimari, DevOps, QA |
-| Veri sözlüğü / iş terimleri | `product/requirements/data-dictionary.md` | `business-analyst` | `sql-developer`, backend |
-| Faz/sürüm planı | `product/roadmap/ROADMAP.md` | `product-owner` | herkes |
-| Sprint içeriği ve görev dağılımı | `product/sprints/sprint-NN.md` | `delivery-manager` | herkes |
-| Risk kaydı | `product/risks.md` | `delivery-manager` | yönetim |
-| Sistem mimarisi | `docs/architecture/ARCHITECTURE.md` | `solution-architect` | geliştirme, QA |
-| Mimari kararlar (`ADR-*`) | `docs/architecture/adr/` | `solution-architect` (onay: `cto`) | geliştirme |
-| API sözleşmesi | `docs/api/openapi.yaml` | `solution-architect` | FE, BE, QA |
-| Veritabanı şeması | `db/schema.sql` + `docs/data/ER.md` | `sql-developer` | BE, data |
-| Kullanıcı akışları, IA | `docs/design/ux/` | `ux-designer` | FE, PO, QA |
-| Design token & komponentler | `docs/design/system/` | `ui-designer` | FE |
-| Test stratejisi | `docs/qa/strategy.md` | `qa-lead` | QA, geliştirme |
-| Test senaryoları | `docs/qa/test-cases/` | `test-engineer` | geliştirme |
-| Hata kayıtları | `docs/qa/bugs/` | `test-engineer` | geliştirme, PO |
-| Tehdit modeli | `docs/security/threat-model.md` | `security-engineer` | mimari, BE |
-| Ortamlar & CI/CD | `docs/ops/` + `infra/` | `devops-engineer` | herkes |
-| Karar günlüğü | `docs/DECISIONS.md` | ekleme: herkes | herkes |
-| Proje özeti (beyin) | `docs/CONTEXT.md` | `delivery-manager` | **herkes, ilk okunan** |
-| Makine durumu | `.state/project.json` | `delivery-manager` | skill'ler |
+| Business goals, success metrics | `product/00-brief.md` | `ceo` | everyone |
+| Product scope, feature list, priority | `product/prd/PRD.md` | `product-owner` | everyone |
+| Functional requirements (`REQ-*`) | `product/requirements/FRD.md` | `business-analyst` | design, engineering, QA |
+| Non-functional requirements (`NFR-*`) | `product/requirements/NFR.md` | `business-analyst` | architecture, DevOps, QA |
+| Data dictionary / domain terms | `product/requirements/data-dictionary.md` | `business-analyst` | `sql-developer`, backend |
+| Phase/release plan | `product/roadmap/ROADMAP.md` | `product-owner` | everyone |
+| Sprint contents and assignments | `product/sprints/sprint-NN.md` | `delivery-manager` | everyone |
+| Risk register | `product/risks.md` | `delivery-manager` | executive |
+| System architecture | `docs/architecture/ARCHITECTURE.md` | `solution-architect` | engineering, QA |
+| Architecture decisions (`ADR-*`) | `docs/architecture/adr/` | `solution-architect` (approval: `cto`) | engineering |
+| API contract | `docs/api/openapi.yaml` | `solution-architect` | FE, BE, QA |
+| Database schema | `db/schema.sql` + `docs/data/ER.md` | `sql-developer` | BE, data |
+| User flows, IA | `docs/design/ux/` | `ux-designer` | FE, PO, QA |
+| Design tokens & components | `docs/design/system/` | `ui-designer` | FE |
+| Test strategy | `docs/qa/strategy.md` | `qa-lead` | QA, engineering |
+| Test cases | `docs/qa/test-cases/` | `test-engineer` | engineering |
+| Bug reports | `docs/qa/bugs/` | `test-engineer` | engineering, PO |
+| Threat model | `docs/security/threat-model.md` | `security-engineer` | architecture, BE |
+| Environments & CI/CD | `docs/ops/` + `infra/` | `devops-engineer` | everyone |
+| Decision log | `docs/DECISIONS.md` | append: everyone | everyone |
+| Project summary (the brain) | `docs/CONTEXT.md` | `delivery-manager` | **everyone, read first** |
+| Machine state | `.state/project.json` | `delivery-manager` | skills |
 
 ---
 
-## Okuma haritası — hangi rol neyi okur
+## Read map — which role reads what
 
-Bir agent **sadece** kendi satırındaki dosyaları açar. Fazlası bütçe ihlalidir.
+An agent opens **only** the files on its row. More than that is a budget violation.
 
 ```
 ceo                  → CONTEXT.md, 00-brief.md, ROADMAP.md, risks.md
@@ -46,85 +45,86 @@ product-owner        → CONTEXT.md, 00-brief.md, PRD.md, FRD.md, ROADMAP.md, ba
 business-analyst     → CONTEXT.md, PRD.md, FRD.md, NFR.md, data-dictionary.md, ux/
 solution-architect   → CONTEXT.md, FRD.md, NFR.md, ARCHITECTURE.md, adr/, openapi.yaml, ER.md
 delivery-manager     → CONTEXT.md, ROADMAP.md, backlog/index.md, sprints/, risks.md, project.json
-ux-designer          → CONTEXT.md, PRD.md, FRD.md (ilgili REQ), ux/, system/
+ux-designer          → CONTEXT.md, PRD.md, FRD.md (relevant REQs), ux/, system/
 ui-designer          → CONTEXT.md, ux/, system/
-frontend-developer   → story dosyası, openapi.yaml, system/, ux/ (ilgili akış), src/frontend
-backend-developer    → story dosyası, openapi.yaml, ER.md, ilgili ADR, src/backend
-sql-developer        → story dosyası, ER.md, schema.sql, data-dictionary.md, db/
-data-engineer        → story dosyası, ER.md, docs/data/, src/data
-devops-engineer      → story dosyası, NFR.md, ARCHITECTURE.md, infra/, docs/ops/
+frontend-developer   → story file, openapi.yaml, system/, ux/ (relevant flow), src/frontend
+backend-developer    → story file, openapi.yaml, ER.md, governing ADR, src/backend
+sql-developer        → story file, ER.md, schema.sql, data-dictionary.md, db/
+data-engineer        → story file, ER.md, docs/data/, src/data
+devops-engineer      → story file, NFR.md, ARCHITECTURE.md, infra/, docs/ops/
 qa-lead              → CONTEXT.md, FRD.md, NFR.md, strategy.md, backlog/index.md
-test-engineer        → story dosyası, FRD.md (ilgili REQ), test-cases/, tests/
-code-reviewer        → diff, ilgili story, ilgili rules dosyası
-security-engineer    → threat-model.md, ARCHITECTURE.md, openapi.yaml, ilgili src
-performance-engineer → NFR.md, ARCHITECTURE.md, performance/, ilgili src
+test-engineer        → story file, FRD.md (relevant REQs), test-cases/, tests/
+code-reviewer        → diff, relevant story, relevant rules file
+security-engineer    → threat-model.md, ARCHITECTURE.md, openapi.yaml, relevant src
+performance-engineer → NFR.md, ARCHITECTURE.md, performance/, relevant src
 tech-writer          → CONTEXT.md, PRD.md, openapi.yaml, CHANGELOG.md
 ```
 
 ---
 
-## `docs/CONTEXT.md` şablonu
+## `docs/CONTEXT.md` template
 
-Bu dosya **her agent'ın ilk okuduğu** dosyadır ve 200 satırı geçemez.
+This is the **first file every agent reads** and may not exceed 200 lines.
 
 ```markdown
-# Proje Bağlamı
+# Project Context
 
-**Proje:** <ad> — <tek cümlelik tanım>
-**Kullanıcı:** <birincil persona>
-**Aşama:** <discovery | design | build | hardening | release | operate>
-**Sürüm hedefi:** <vX.Y — tarih>
-**İnceleme modu:** <full | lean | solo>
+**Project:** <name> — <one-sentence description>
+**Primary user:** <persona>
+**Stage:** <discovery | design | build | hardening | release | operate>
+**Release target:** <vX.Y — date>
+**Review mode:** <full | lean | solo>
 
-## Ne inşa ediyoruz
-<3-5 madde, kullanıcı değeri odaklı>
+## What we are building
+<3-5 bullets, user-value oriented>
 
-## Kapsam dışı (bilinçli)
-<3-5 madde>
+## Deliberately out of scope
+<3-5 bullets>
 
-## Teknoloji yığını
-| Katman | Seçim | ADR |
+## Technology stack
+| Layer | Choice | ADR |
 |---|---|---|
 
-## Kritik NFR'ler
-<en fazla 5 satır — performans, güvenlik, ölçek hedefleri>
+## Critical NFRs
+<at most 5 lines — performance, security, scale targets>
 
-## Aktif roller
-<kadro listesi>
+## Active roles
+<roster list>
 
-## Şu an ne yapılıyor
-**Sprint:** <NN> — <hedef>
-**Devam eden:** <story listesi, sahipleriyle>
-**Bloke:** <varsa>
+## Current work
+**Sprint:** <NN> — <goal>
+**In progress:** <story list with owners>
+**Blocked:** <if any>
 
-## Bilinen borç ve riskler
-<en fazla 5 satır>
+## Known debt and risks
+<at most 5 lines>
 ```
 
 ---
 
-## Devir (handoff) paketi
+## Handoff packet
 
-Bir agent işi diğerine devrederken `/handoff` kullanılır. Paket şu formattadır
-ve **200 kelimeyi geçmez**:
+When one agent hands work to another, `/handoff` is used. The packet follows this
+format and **must not exceed 200 words**:
 
 ```
-DEVREDEN: <rol>   ALAN: <rol>   İŞ: <story-id>
-YAPILDI: <maddeler>
-KALAN: <maddeler>
-KARARLAR: <alınan kararlar, gerekçesiyle>
-DİKKAT: <tuzaklar, varsayımlar>
-DOSYALAR: <dokunulan yollar>
-DOĞRULAMA: <alan kişinin çalıştıracağı komut>
+FROM: <role>   TO: <role>   WORK: <story-id>
+DONE: <bullets>
+REMAINING: <bullets>
+DECISIONS: <decisions made, with rationale>
+WATCH OUT: <pitfalls, assumptions>
+FILES: <paths touched>
+VERIFY: <command the receiving agent should run>
 ```
 
 ---
 
-## Çakışma çözümü
+## Conflict resolution
 
-İki agent aynı dosyayı değiştirmek isterse:
+When two agents want to change the same file:
 
-1. Dosyanın **sahibi** tabloya bakılarak belirlenir.
-2. Sahip olmayan agent değişikliği **öneri** olarak sunar, kendisi yazmaz.
-3. Sahip agent kabul ederse yazar; reddederse gerekçe `docs/DECISIONS.md`'ye eklenir.
-4. Anlaşmazlık sürerse yetki matrisindeki bir üst role escalate edilir.
+1. The file's **owner** is determined from the table above.
+2. The non-owner presents the change as a **proposal**; it does not write.
+3. If the owner accepts, the owner writes. If rejected, the rationale is added to
+   `docs/DECISIONS.md`.
+4. If the disagreement persists, escalate one level up in the authority matrix.

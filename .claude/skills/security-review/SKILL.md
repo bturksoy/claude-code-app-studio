@@ -1,113 +1,115 @@
 ---
 name: security-review
-description: Kod ve yapılandırma üzerinde güvenlik incelemesi yapar. OWASP kontrollerini, yetkilendirme mantığını, secret sızıntısını ve tehdit modelindeki önlemlerin uygulanıp uygulanmadığını denetler. SEC-REVIEW kapısını işletir.
+description: Performs a security review of code and configuration. Checks OWASP items, authorization logic, secret leakage, and whether the threat model's mitigations were implemented. Operates the SEC-REVIEW gate.
 ---
 
-# /security-review [kapsam]
+# /security-review [scope]
 
-Sahip: `security-engineer`. Kapsam: epic, sürüm veya boş (→ son sprint değişiklikleri).
+Owner: `security-engineer`. Scope: an epic, a release, or empty (→ the last sprint's changes).
 
 ---
 
-## 1. Hedefli tarama (agent çağırmadan — ucuz ön eleme)
+## 1. Targeted scan (no agent — cheap pre-filter)
 
-Grep ile şu desenleri ara ve bulgu adaylarını topla:
-
-```
-Secret sızıntısı : api[_-]?key|secret|password\s*=|token\s*=|BEGIN (RSA|PRIVATE)
-Enjeksiyon riski : raw query, string concat + SELECT/INSERT, exec(, eval(
-XSS riski        : innerHTML, dangerouslySetInnerHTML, v-html, |safe
-Yetki eksikliği  : router/controller tanımları — auth middleware olmayanlar
-Kripto           : md5|sha1|Math.random\(\)|DES|ECB
-CORS/başlık      : cors\(|Access-Control-Allow-Origin
-Deserializasyon  : pickle|yaml.load\(|JSON.parse\( + kullanıcı girdisi
-Dosya            : path.join.*req\.|readFile.*req\.
-```
-
-Ayrıca bağımlılık taraması çalıştır (varsa): `npm audit`, `pip-audit`, `dotnet list package --vulnerable`.
-
-## 2. `security-engineer` çağır
+Grep for these patterns and collect candidate findings:
 
 ```
-Kapsam: <ne incelendi>
-
-TEHDİT MODELİ ÖNLEMLERİ (uygulanmış mı kontrol edilecek):
-<threat-model.md'den YÜKSEK/KRİTİK önlemler tablosu>
-
-TARAMA BULGU ADAYLARI:
-<Grep sonuçları — dosya:satır + eşleşen satır>
-
-BAĞIMLILIK TARAMASI:
-<audit çıktısı>
-
-DEĞİŞEN KOD:
-<diff veya ilgili dosyalar>
-
-API SÖZLEŞMESİ:
-<endpoint listesi + security tanımları>
-
-Görev: SEC-REVIEW kapısı.
-
-1. Tarama adaylarını doğrula — hangileri gerçek açık, hangileri yanlış pozitif
-2. Tehdit modelindeki her YÜKSEK/KRİTİK önlem uygulanmış mı — kodda göster
-3. Ek kontroller:
-   - Her endpoint'te yetkilendirme var mı, kaynak sahipliği (IDOR) kontrol ediliyor mu
-   - Girdi doğrulama sınırda mı
-   - Hata yanıtları detay sızdırıyor mu
-   - Log'da gizli veri var mı
-   - Hız sınırlama kritik uçlarda var mı
-4. Her bulgu için SOMUT sömürü senaryosu yaz. Yazamıyorsan bulgu değildir → NOT.
-
-Bulgu formatı:
-[KRİTİK|YÜKSEK|ORTA|DÜŞÜK] <dosya:satır>
-  Açık: | Sömürü: <saldırgan ne yapar, ne elde eder> | Etki: | Düzeltme: | Doğrulama:
-
-Exploit kodu ÜRETME. Proje ölçeğine uygun ol.
-Yanıtına "SEC-REVIEW: ONAY|ŞARTLI|RET" satırıyla başla.
+Secret leakage   : api[_-]?key|secret|password\s*=|token\s*=|BEGIN (RSA|PRIVATE)
+Injection risk   : raw query, string concat + SELECT/INSERT, exec(, eval(
+XSS risk         : innerHTML, dangerouslySetInnerHTML, v-html, |safe
+Missing authz    : router/controller definitions without auth middleware
+Cryptography     : md5|sha1|Math.random\(\)|DES|ECB
+CORS/headers     : cors\(|Access-Control-Allow-Origin
+Deserialization  : pickle|yaml.load\(|JSON.parse\( + user input
+Files            : path.join.*req\.|readFile.*req\.
 ```
 
-## 3. Sun
+Also run a dependency scan if available: `npm audit`, `pip-audit`,
+`dotnet list package --vulnerable`.
+
+## 2. Invoke `security-engineer`
 
 ```
-## Güvenlik İncelemesi — <kapsam>
-Verdikt: SEC-REVIEW <verdikt>
+Scope: <what was reviewed>
 
-Bulgular: Kritik <a> | Yüksek <b> | Orta <c> | Düşük <d>
-Yanlış pozitif elenen: <n>
+THREAT MODEL MITIGATIONS (to be checked for implementation):
+<the HIGH/CRITICAL mitigation table from threat-model.md>
 
-[KRİTİK] <dosya:satır> — <açık>
-  Sömürü: <senaryo>
-  Düzeltme: <somut>
+SCAN CANDIDATES:
+<Grep results — file:line + the matching line>
 
-Tehdit modeli önlemleri: <uygulanan>/<toplam>
-⚠ Uygulanmamış: <liste>
+DEPENDENCY SCAN:
+<audit output>
 
-Bağımlılık: <açık sayısı> (<kritik sayısı> kritik)
+CHANGED CODE:
+<diff or the relevant files>
+
+API CONTRACT:
+<endpoint list + security definitions>
+
+Task: the SEC-REVIEW gate.
+
+1. Validate the scan candidates — which are real vulnerabilities, which are false positives
+2. Was each HIGH/CRITICAL mitigation from the threat model implemented — show it in the code
+3. Additional checks:
+   - Is authorization present on every endpoint, is resource ownership (IDOR) checked
+   - Is input validation at the boundary
+   - Do error responses leak detail
+   - Is there sensitive data in the logs
+   - Is rate limiting present on critical endpoints
+4. Write a CONCRETE exploit scenario for each finding. If you cannot, it is not a
+   finding → NOTE.
+
+Finding format:
+[CRITICAL|HIGH|MEDIUM|LOW] <file:line>
+  Vulnerability: | Exploit: <what the attacker does, what they gain> | Impact: | Fix: | Verification:
+
+Do NOT produce exploit code. Match the scale of this project.
+Begin your reply with "SEC-REVIEW: APPROVED|CONDITIONAL|REJECTED".
 ```
 
-## 4. Düzeltme ve kabul
+## 3. Present
+
+```
+## Security Review — <scope>
+Verdict: SEC-REVIEW <verdict>
+
+Findings: Critical <a> | High <b> | Medium <c> | Low <d>
+False positives eliminated: <n>
+
+[CRITICAL] <file:line> — <vulnerability>
+  Exploit: <scenario>
+  Fix: <concrete>
+
+Threat model mitigations: <implemented>/<total>
+⚠ Not implemented: <list>
+
+Dependencies: <vulnerability count> (<critical count> critical)
+```
+
+## 4. Fixes and acceptance
 
 `AskUserQuestion`:
-- `Kritik + Yüksek bulguları düzelt (Önerilen)`
-- `Sadece Kritik'leri düzelt, kalanı risk olarak kabul et`
-- `Hepsini backlog'a story olarak ekle`
+- `Fix Critical + High findings (Recommended)`
+- `Fix only the Criticals, accept the rest as risk`
+- `Add them all to the backlog as stories`
 
-Kabul edilen riskler `product/risks.md`'ye: risk, gerekçe, kim kabul etti,
-gözden geçirme tarihi. **Kabul kararı kullanıcınındır**, güvenlik mühendisinin değil.
+Accepted risks go into `product/risks.md`: the risk, the rationale, who accepted it,
+the review date. **The acceptance decision is the user's**, not the security engineer's.
 
-Düzeltme seçilirse ilgili geliştiriciye tek turda gönder ve `RET` verdiktinde
-düzeltme sonrası kapıyı bir kez daha çağır.
+If a fix is chosen, send it to the relevant developer in one round; on a `REJECTED`
+verdict, invoke the gate once more after the fix.
 
-## 5. Kaydet
+## 5. Record
 
-- `docs/security/checklist.md` — bu turun sonuçları (tarih damgalı)
+- `docs/security/checklist.md` — this round's results (date-stamped)
 - `.state/gates.jsonl` → SEC-REVIEW
-- Kabul edilen riskler → `product/risks.md`
+- Accepted risks → `product/risks.md`
 
 ---
 
-## Token notu
+## Token note
 
-- **Grep ön elemesi bedava** ve agent'ın arama yapmasını önler — en büyük tasarruf.
-- **1 agent çağrısı** + en fazla 1 düzeltme turu.
-- Tehdit modelinin tamamını değil, sadece YÜKSEK/KRİTİK önlem tablosunu göm.
+- The **Grep pre-filter is free** and stops the agent from searching — the biggest saving here.
+- **1 agent call** + at most 1 fix round.
+- Embed only the HIGH/CRITICAL mitigation table from the threat model, not the whole document.

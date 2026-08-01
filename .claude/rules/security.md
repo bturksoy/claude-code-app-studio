@@ -1,88 +1,87 @@
-# Güvenlik Kuralları (tüm kod için geçerli)
+# Security Rules (apply to all code)
 
-**Kapsam:** `src/**`, `infra/**`, `db/**` — diğer kural dosyalarının üstünde geçerlidir.
+**Scope:** `src/**`, `infra/**`, `db/**` — these rules override the other rule files.
 
 ---
 
-## Kimlik ve yetki
+## Identity and authorization
 
-- **Varsayılan reddet.** Her giriş noktasında yetkilendirme açıkça yazılır
-- **Kaynak sahipliği kontrolü zorunlu.** "Bu kaydı bu kullanıcı görebilir/değiştirebilir mi"
-  — en sık bulunan kritik açık budur (IDOR)
-- Rol kontrolü ≠ sahiplik kontrolü. İkisi de gerekir
-- Yetki kontrolü client'ta **tekrarlanabilir** (UX için) ama otorite backend'dir
-- Parola: modern KDF (argon2id / bcrypt), uygun maliyet parametresi. MD5/SHA1 yasak
-- Token: kısa ömür, yenileme rotasyonu, iptal (revoke) mekanizması
-- Yönetim uçları ayrıca korunur (ek yetki + hız sınırı + denetim izi)
+- **Default deny.** Authorization is written explicitly at every entry point
+- **Resource ownership checks are mandatory.** "Can this user see/modify this record"
+  — this is the most commonly found critical vulnerability (IDOR)
+- Role check ≠ ownership check. Both are required
+- Authorization may be **duplicated** on the client (for UX), but the backend is authoritative
+- Passwords: modern KDF (argon2id/bcrypt) with appropriate cost. MD5/SHA1 forbidden
+- Tokens: short lifetime, refresh rotation, revocation mechanism
+- Admin endpoints get extra protection (additional authorization + rate limit + audit trail)
 
-## Girdi
+## Input
 
-- Doğrulama **sınırda** yapılır (şema), iş doğrulaması ayrıca domain'de
-- Allowlist tercih edilir, denylist değil
-- Boyut sınırı her yerde: gövde, dosya, dizi uzunluğu, string uzunluğu
-- Dosya yükleme: tip (magic byte), boyut, ad temizleme, izole depolama
-- Yol geçişi (path traversal): kullanıcı girdisi dosya yoluna doğrudan girmez
-- SSRF: dış URL alan her yer allowlist ile korunur, iç ağ adresleri engellenir
+- Validation happens **at the boundary** (schema), business validation additionally in the domain
+- Allowlists are preferred over denylists
+- Size limits everywhere: body, file, array length, string length
+- File upload: type (magic bytes), size, filename sanitization, isolated storage
+- Path traversal: user input never goes directly into a file path
+- SSRF: anywhere an external URL is accepted uses an allowlist and blocks internal addresses
 
-## Enjeksiyon
+## Injection
 
-- SQL: **her zaman** parametreli sorgu. String birleştirme yasak
-- Komut çalıştırma: kullanıcı girdisi shell'e geçmez; geçmesi gerekiyorsa
-  argüman dizisi kullan, shell=false
-- Şablon: otomatik kaçış açık; kapatılıyorsa gerekçe + sanitizasyon
-- XSS: `innerHTML` / `dangerouslySetInnerHTML` / `v-html` kaçınılır; kullanılırsa sanitize
-- Deserializasyon: güvenilmeyen veri için güvenli parser (`yaml.safe_load`, `pickle` yasak)
+- SQL: **always** parameterized queries. String concatenation forbidden
+- Command execution: user input never reaches a shell; if it must, use an argument
+  array with `shell=false`
+- Templates: auto-escaping on; if disabled, justify and sanitize
+- XSS: avoid `innerHTML` / `dangerouslySetInnerHTML` / `v-html`; sanitize if used
+- Deserialization: safe parsers for untrusted data (`yaml.safe_load`; `pickle` forbidden)
 
-## Çıktı ve sızıntı
+## Output and leakage
 
-- Hata yanıtında: stack trace, SQL, dosya yolu, sürüm bilgisi, iç IP **yok**
-- Log'da maskelenir: şifre, token, API anahtarı, kart numarası, kimlik numarası,
-  e-posta (kısmi), sağlık verisi
-- Kullanıcı numaralandırma (enumeration) engellenir: "kullanıcı yok" ve "şifre yanlış"
-  aynı yanıtı döner
-- Zamanlama saldırısı: kimlik doğrulama karşılaştırmaları sabit zamanlı
+- Error responses contain no stack traces, SQL, file paths, version info or internal IPs
+- Masked in logs: passwords, tokens, API keys, card numbers, identity numbers,
+  emails (partial), health data
+- User enumeration is prevented: "user not found" and "wrong password" return the same response
+- Timing attacks: authentication comparisons are constant-time
 
-## Veri koruma
+## Data protection
 
-- Aktarımda TLS zorunlu (HSTS)
-- Hassas alanlar durağanda şifreli
-- Kişisel veri minimizasyonu: toplanmayan veri sızmaz
-- Saklama süresi tanımlı, silme mekanizması var
-- Yedekler şifreli ve erişimi kısıtlı
-- Test/geliştirme ortamına üretim verisi **anonimleştirilmeden** kopyalanmaz
+- TLS in transit (HSTS)
+- Sensitive fields encrypted at rest
+- Personal data minimization: data not collected cannot leak
+- Retention period defined, deletion mechanism present
+- Backups encrypted with restricted access
+- Production data is **never** copied to test/development without anonymization
 
-## Yapılandırma
+## Configuration
 
-- Secret repoda **yok**. `.env` versiyonlanmaz
-- Güvenlik başlıkları: HSTS, CSP, X-Content-Type-Options, Referrer-Policy, X-Frame-Options
-- CORS: allowlist. `*` + `credentials: true` **yasak**
-- Varsayılan hesap/parola yok
-- Debug modu üretimde kapalı
-- Dizin listeleme kapalı
+- **No secrets in the repo.** `.env` is not versioned
+- Security headers: HSTS, CSP, X-Content-Type-Options, Referrer-Policy, X-Frame-Options
+- CORS: allowlist. `*` combined with `credentials: true` is **forbidden**
+- No default accounts or passwords
+- Debug mode off in production
+- Directory listing off
 
-## Kriptografi
+## Cryptography
 
-- Kendi şifreleme algoritmanı **yazma** — standart kütüphane kullan
-- Rastgelelik: kriptografik güvenli kaynak (`crypto.randomBytes`, `secrets`)
-  — `Math.random()` güvenlik için **yasak**
-- Yasak: MD5, SHA1 (güvenlik amaçlı), DES, ECB modu, sabit IV
+- **Never write your own** encryption algorithm — use a standard library
+- Randomness: cryptographically secure source (`crypto.randomBytes`, `secrets`)
+  — `Math.random()` is **forbidden** for security purposes
+- Forbidden: MD5, SHA1 (for security), DES, ECB mode, fixed IVs
 
-## Bağımlılık
+## Dependencies
 
-- Lock dosyası mevcut ve commit'li
-- Bilinen açık taraması pipeline'da
-- Yeni bağımlılık ADR gerektirir (bakım durumu, lisans, boyut, güvenlik geçmişi)
+- Lock file present and committed
+- Known-vulnerability scanning in the pipeline
+- A new dependency requires an ADR (maintenance status, license, size, security history)
 
-## Suistimal koruması
+## Abuse protection
 
-- Kimlik doğrulama uçlarında brute-force koruması (hız sınırı + hesap kilidi)
-- Pahalı uçlarda hız sınırı ve kaynak sınırı
-- Denetim izi (audit log): kim, ne zaman, ne yaptı — değiştirilemez
+- Brute-force protection on authentication endpoints (rate limit + account lockout)
+- Rate limits and resource caps on expensive endpoints
+- Audit log: who, when, what — immutable
 
-## Yasaklar
+## Prohibitions
 
-- Secret'ı ekrana basmak, log'lamak veya commit'lemek
-- Güvenlik kontrolünü "geçici olarak" kapatmak
-- Yetkilendirmeyi "zaten iç ağda" diye atlamak
-- Exploit kodu veya saldırı aracı üretmek
-- Üretim sistemine karşı güvenlik testi çalıştırmak (izin olmadan)
+- Printing, logging or committing a secret
+- Disabling a security control "temporarily"
+- Skipping authorization because "it is on the internal network anyway"
+- Producing exploit code or attack tooling
+- Running security tests against production systems (without permission)

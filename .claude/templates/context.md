@@ -1,55 +1,55 @@
-# Proje Bağlamı
+# Project Context
 
-> Bu dosya her agent'ın **ilk okuduğu** dosyadır. 200 satırı geçemez.
-> Şişerse `/context-compact` çalıştırılır.
+> This is the **first file every agent reads**. It may not exceed 200 lines.
+> When it grows past that, run `/context-compact`.
 
-**Proje:** <ad> — <tek cümlelik tanım>
-**Birincil kullanıcı:** <persona>
-**Aşama:** <discovery | design | build | hardening | release | operate>
-**Sürüm hedefi:** <vX.Y — YYYY-MM-DD>
-**İnceleme modu:** <full | lean | solo>
-**Ölçek:** <prototype | standard | enterprise>
+**Project:** <name> — <one-sentence description>
+**Primary user:** <persona>
+**Stage:** <discovery | design | build | hardening | release | operate>
+**Release target:** <vX.Y — YYYY-MM-DD>
+**Review mode:** <full | lean | solo>
+**Scale:** <prototype | standard | enterprise>
 
-## Ne inşa ediyoruz
+## What we are building
 
-<3-5 madde, kullanıcı değeri odaklı>
+<3-5 bullets, user-value oriented>
 
-## Kapsam dışı (bilinçli)
+## Deliberately out of scope
 
-<3-5 madde — MVP'de olmayacaklar>
+<3-5 bullets — not in the MVP>
 
-## Teknoloji yığını
+## Technology stack
 
-| Katman | Seçim | ADR |
+| Layer | Choice | ADR |
 |---|---|---|
 | Frontend | | |
 | Backend | | |
-| Veritabanı | | |
-| Altyapı | | |
+| Database | | |
+| Infrastructure | | |
 | CI/CD | | |
 
-## Kritik NFR'ler
+## Critical NFRs
 
-<En fazla 5 satır. Sayısal hedeflerle.>
+<At most 5 lines, with numeric targets>
 
-## Aktif roller
+## Active roles
 
-<kadro listesi>
+<roster list>
 
-## Şu an ne yapılıyor
+## Current work
 
-**Faz:** <N> — <ad>
-**Sprint:** <NN> — <hedef>
-**Devam eden:**
-| Story | Sahip | Durum |
+**Phase:** <N> — <name>
+**Sprint:** <NN> — <goal>
+**In progress:**
+| Story | Owner | Status |
 |---|---|---|
 
-**Bloke:** <varsa — neden, kime escalate edildi>
+**Blocked:** <if any — why, escalated to whom>
 
-## Bilinen borç ve riskler
+## Known debt and risks
 
-<En fazla 5 satır. Detay: product/risks.md>
+<At most 5 lines. Detail lives in product/risks.md>
 
-## Son kararlar
+## Recent decisions
 
-<Son 3 önemli karar, tek satır. Tamamı: docs/DECISIONS.md>
+<The last 3 significant decisions, one line each. Full log: docs/DECISIONS.md>

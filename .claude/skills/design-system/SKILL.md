@@ -1,108 +1,108 @@
 ---
 name: design-system
-description: Design token setini ve komponent kataloğunu üretir. UX ekranlarından komponent listesini türetir, her komponentin varyant, durum, prop ve erişilebilirlik spesifikasyonunu yazar.
+description: Produces the design token set and component catalogue. Derives the component list from the UX screens and writes variant, state, prop and accessibility specifications for each.
 ---
 
 # /design-system
 
-Sahip: `ui-designer`. Çıktı: `docs/design/system/`
+Owner: `ui-designer`. Output: `docs/design/system/`
 
-Ön koşul: `docs/design/ux/wireframes/` (yoksa `/ux-flow` öner).
+Prerequisite: `docs/design/ux/wireframes/` (if missing, suggest `/ux-flow`).
 
 ---
 
-## 1. Girdi
+## 1. Input
 
-- Ekran envanteri ve wireframe spesifikasyonlarındaki **UI öğeleri**
-  (Grep ile `[` ile başlayan yerleşim satırlarını topla — tam wireframe gömme)
-- Erişilebilirlik NFR'leri
-- Marka/görsel tercih varsa `docs/DECISIONS.md`'den
+- The **UI elements** from the screen inventory and wireframe specifications
+  (collect the layout lines starting with `[` via Grep — do not embed whole wireframes)
+- Accessibility NFRs
+- Any brand/visual preference from `docs/DECISIONS.md`
 
-Kullanıcıya `AskUserQuestion` ile sor:
-- **Görsel yön:** `Nötr ve profesyonel (Önerilen)` / `Sıcak ve samimi` /
-  `Yoğun ve veri odaklı` / `Mevcut markam var (anlatacağım)`
-- **Tema:** `Açık + koyu (Önerilen)` / `Sadece açık`
+Ask the user via `AskUserQuestion`:
+- **Visual direction:** `Neutral and professional (Recommended)` / `Warm and friendly` /
+  `Dense and data-oriented` / `I have an existing brand (I'll describe it)`
+- **Theme:** `Light + dark (Recommended)` / `Light only`
 
-## 2. `ui-designer` çağır
+## 2. Invoke `ui-designer`
 
 ```
-Ekranlarda geçen UI öğeleri: <türetilmiş liste>
-Görsel yön: <cevap> | Tema: <cevap>
-Erişilebilirlik hedefi: WCAG 2.2 AA
-Platform: <web/mobil>
+UI elements appearing in the screens: <derived list>
+Visual direction: <answer> | Theme: <answer>
+Accessibility target: WCAG 2.2 AA
+Platform: <web/mobile>
 
-Görev: Design system üret.
+Task: produce the design system.
 
 1. tokens.md
-   - Ham palet (kontrast oranlarıyla)
-   - ANLAMSAL eşleme tablosu (açık + koyu tema)
+   - Raw palette (with contrast ratios)
+   - SEMANTIC mapping table (light + dark theme)
      surface.*, text.*, border.*, action.*, feedback.*
-   - Tipografi ölçeği, boşluk ölçeği (4px tabanlı), yarıçap, gölge, hareket
-   - Kural: komponentler SADECE anlamsal token kullanır
+   - Type scale, spacing scale (4px-based), radius, shadow, motion
+   - Rule: components use ONLY semantic tokens
 
-2. Komponent envanteri — ekranlardan TÜRET, hayali komponent yazma
-   | Komponent | Kullanıldığı ekranlar | Öncelik | Karmaşıklık |
+2. Component inventory — DERIVE it from the screens; do not invent components
+   | Component | Screens used on | Priority | Complexity |
 
-3. Her komponent için spesifikasyon:
-   anatomi, varyantlar, durumlar (default/hover/focus-visible/active/
-   disabled/loading/error), props tablosu, erişilebilirlik
-   (ARIA rolü, klavye haritası, odak halkası, dokunma hedefi ≥44px),
-   yapılmaz listesi
+3. A specification per component:
+   anatomy, variants, states (default/hover/focus-visible/active/
+   disabled/loading/error), props table, accessibility
+   (ARIA role, keyboard map, focus ring, touch target ≥44px),
+   a "do not" list
 
-4. patterns.md — form yerleşimi, tablo+filtre, modal, boş durum,
-   bildirim, onay akışı, sayfalama. Her biri için TEK doğru yol.
+4. patterns.md — form layout, table+filter, modal, empty state,
+   notification, confirmation flow, pagination. ONE correct way for each.
 
-5. accessibility.md — WCAG 2.2 AA kontrol listesi + bu sistemdeki karşılıkları
+5. accessibility.md — the WCAG 2.2 AA checklist and how this system meets it
 
-Kurallar:
-- Az sayıda, iyi tanımlı token. 40 renk tokeni sistemi öldürür.
-- Kontrast oranlarını hesapla ve yaz (metin ≥4.5:1, UI ≥3:1)
-- Bir komponentin loading ve error hali yoksa komponent bitmemiştir
-- Frontend geliştiricinin soru sormadan implement edebileceği netlikte yaz
+Rules:
+- Few, well-defined tokens. Forty colour tokens kill the system.
+- Compute and write down contrast ratios (text ≥4.5:1, UI ≥3:1)
+- A component without a loading and error state is unfinished
+- Write it clearly enough that the frontend developer can implement without questions
 
-Önce token setini ve komponent envanterini ver, sonra spesifikasyonları.
+Give the token set and component inventory first, then the specifications.
 ```
 
-## 3. Kapsam kontrolü
+## 3. Scope check
 
-Komponent sayısı 15'i aşıyorsa: öncelik `Yüksek` olanları şimdi, kalanı
-ihtiyaç doğdukça yaz. Kullanıcıya sor.
+If the component count exceeds 15: write the `High` priority ones now and the rest
+as they are needed. Ask the user.
 
-## 4. Sun
+## 4. Present
 
 ```
 ## Design System
-Tokenlar: <N> anlamsal (renk <a>, tipografi <b>, boşluk <c>)
-Tema: <açık+koyu>
-Komponentler: <M>
+Tokens: <N> semantic (colour <a>, typography <b>, spacing <c>)
+Theme: <light+dark>
+Components: <M>
 
-| Komponent | Kullanım | Öncelik |
+| Component | Usage | Priority |
 
-Kontrast kontrolü: <geçen>/<toplam>
-⚠ Kontrast sorunlu: <varsa>
+Contrast check: <passing>/<total>
+⚠ Contrast problems: <if any>
 ```
 
-## 5. Yaz
+## 5. Write
 
 - `docs/design/system/tokens.md`
-- `docs/design/system/components/<ad>.md`
+- `docs/design/system/components/<name>.md`
 - `docs/design/system/patterns.md`
 - `docs/design/system/accessibility.md`
 
-## 6. Kapat
+## 6. Close
 
 ```
 ✓ Design system → docs/design/system/
-  <N> token | <M> komponent
+  <N> tokens | <M> components
 
-▶ Sonraki: /epics
-   Artık geliştirmeye hazırız — backlog kırılımı yapılacak.
+▶ Next: /epics
+   We are ready to build — time for the backlog breakdown.
 ```
 
 ---
 
-## Token notu
+## Token note
 
-- **1 agent çağrısı.**
-- Wireframe'lerin tamamını gömme; sadece UI öğesi satırlarını türet.
-- Komponent spesifikasyonlarını öncelik sırasına göre yaz — hepsini birden değil.
+- **1 agent call.**
+- Do not embed whole wireframes; derive just the UI element lines.
+- Write component specifications in priority order, not all at once.

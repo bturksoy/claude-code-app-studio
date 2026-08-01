@@ -1,15 +1,15 @@
 ---
 name: start
-description: Proje durumunu tespit eder ve nereden devam edileceğini söyler. Yeni projede kurulumu başlatır, mevcut projede eksik adımı bulur. Her oturumun ilk komutu.
+description: Detects the project state and tells you where to continue. Bootstraps a new project or finds the missing step in an existing one. The first command of every session.
 ---
 
 # /start
 
-Ucuz bir durum tespiti yapar ve **tek bir sonraki adım** önerir. Agent çağırmaz.
+Performs a cheap state check and suggests **a single next step**. Invokes no agents.
 
-## 1. Durum tespiti
+## 1. State detection
 
-Şu dosyaların varlığını **Glob ile** kontrol et (içeriklerini okuma):
+Check the existence of these files **with Glob** (do not read their contents):
 
 ```
 .state/project.json
@@ -24,68 +24,68 @@ product/sprints/index.md
 docs/CONTEXT.md
 ```
 
-Ayrıca: `src/` altında dosya var mı (Glob `src/**/*.*`, ilk 5 sonuç yeter).
+Also: are there any files under `src/` (Glob `src/**/*.*`, the first 5 results suffice).
 
-## 2. Duruma göre yönlendir
+## 2. Route by state
 
-### A) Hiçbiri yok, `src/` de boş → **yeni proje**
-
-```
-Bu dizinde henüz proje yok.
-
-Başlamak için proje fikrini tek cümleyle yaz:
-  /kickoff "<proje fikrin>"
-
-Örnek:
-  /kickoff "Küçük işletmeler için stok ve fatura takip uygulaması"
-```
-
-Dur, başka bir şey yapma.
-
-### B) `src/` dolu ama `product/` ve `docs/` yok → **mevcut kod tabanı**
+### A) None of them exist and `src/` is empty → **new project**
 
 ```
-Kod var ama App Studio dokümanları yok.
+There is no project in this directory yet.
 
-  /onboard    → mevcut kod tabanını analiz edip CONTEXT.md ve mimari taslağı çıkarır
+To begin, describe your project idea in one sentence:
+  /kickoff "<your project idea>"
+
+Example:
+  /kickoff "Inventory and invoicing app for small businesses"
 ```
 
-### C) `.state/project.json` var → **devam eden proje**
+Stop. Do nothing else.
 
-`.state/project.json` ve `docs/CONTEXT.md` oku (sadece bu ikisi).
-Şu tabloyu üret:
+### B) `src/` has content but `product/` and `docs/` do not → **existing codebase**
 
 ```
-## <proje adı>
-Faz: <faz>  |  Sprint: <NN>  |  Mod: <lean>  |  Ölçek: <standard>
+There is code here but no App Studio documentation.
 
-Tamamlanan
-  ✓ <adım>  → <dosya>
-Eksik
-  ○ <adım>  → <komut>
-
-Açık kapı koşulu: <N>  (varsa .state/gates.jsonl'den ŞARTLI olanlar)
-
-▶ Sonraki adım: <tek komut>
+  /onboard    → analyses the codebase and drafts CONTEXT.md and the architecture
 ```
 
-Faz → sonraki komut haritası:
+### C) `.state/project.json` exists → **project in progress**
 
-| Mevcut durum | Sonraki |
+Read `.state/project.json` and `docs/CONTEXT.md` (only these two).
+Produce this table:
+
+```
+## <project name>
+Phase: <phase>  |  Sprint: <NN>  |  Mode: <lean>  |  Scale: <standard>
+
+Completed
+  ✓ <step>  → <file>
+Missing
+  ○ <step>  → <command>
+
+Open gate conditions: <N>  (CONDITIONAL entries from .state/gates.jsonl)
+
+▶ Next step: <a single command>
+```
+
+State → next command map:
+
+| Current state | Next |
 |---|---|
-| brief var, PRD yok | `/prd` |
-| PRD var, FRD yok | `/requirements` |
-| FRD var, roadmap yok | `/roadmap` |
-| roadmap var, mimari yok | `/architecture` |
-| mimari var, backlog yok | `/epics` |
-| epic var, story yok | `/stories <epic>` |
-| story var, sprint yok | `/sprint-plan` |
-| sprint var, açık story var | `/dev-task <story>` |
-| tüm story'ler DONE | `/dod-check` → `/release` |
+| Brief exists, no PRD | `/prd` |
+| PRD exists, no FRD | `/requirements` |
+| FRD exists, no roadmap | `/roadmap` |
+| Roadmap exists, no architecture | `/architecture` |
+| Architecture exists, no backlog | `/epics` |
+| Epics exist, no stories | `/stories <epic>` |
+| Stories exist, no sprint | `/sprint-plan` |
+| Sprint active with open stories | `/dev-task <story>` |
+| All stories DONE | `/dod-check` → `/release` |
 
-## 3. Kurallar
+## 3. Rules
 
-- **Hiçbir agent çağırma.** Bu skill sadece dosya varlığına bakar.
-- **Tam dosya okuma sayısı: en fazla 2** (`project.json`, `CONTEXT.md`).
-- Birden fazla eksik varsa **sadece ilkini** öner — kullanıcıyı seçeneğe boğma.
-- Kullanıcı "hepsini anlat" derse `/help` çalıştırmasını söyle.
+- **Invoke no agents.** This skill only checks file existence.
+- **Maximum whole-file reads: 2** (`project.json`, `CONTEXT.md`).
+- If several things are missing, suggest **only the first** — do not flood the user with options.
+- If the user asks to see everything, tell them to run `/help`.

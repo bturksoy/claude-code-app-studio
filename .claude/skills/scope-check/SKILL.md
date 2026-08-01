@@ -1,103 +1,104 @@
 ---
 name: scope-check
-description: Kapsam kaymasını tespit eder. Mevcut backlog'u orijinal hedeflerle karşılaştırır, hedefe bağlanmayan işleri bulur ve kesme önerileri üretir.
+description: Detects scope creep. Compares the current backlog against the original goals, finds work not tied to a goal, and produces cut recommendations.
 ---
 
 # /scope-check
 
-Sahip: `product-owner`. Ne zaman: sprint planı öncesi, takvim baskısında,
-yeni istek geldiğinde.
+Owner: `product-owner`. When: before sprint planning, under schedule pressure, or when
+a new request arrives.
 
 ---
 
-## 1. İzlenebilirlik denetimi (bedava)
+## 1. Traceability audit (free)
 
-Zinciri kontrol et: `story → REQ → GOAL`
+Check the chain: `story → REQ → GOAL`
 
-Grep ile topla:
-- Tüm story'lerin `İzlenebilirlik` satırları
-- `FRD.md`'deki REQ → GOAL eşlemeleri
-- `00-brief.md`'deki GOAL listesi
+Collect with Grep:
+- The `Traceability` lines of every story
+- The REQ → GOAL mappings in `FRD.md`
+- The GOAL list in `00-brief.md`
 
-Kopukları bul:
+Find the breaks:
 ```
-⚠ GOAL'a bağlanmayan REQ: <liste>
-⚠ REQ'e bağlanmayan story: <liste>
-⚠ Hiçbir story tarafından karşılanmayan REQ: <liste>
-⚠ MVP'de olmayacaklar listesindeki bir şey backlog'a girmiş mi: <liste>
-```
-
-## 2. Büyüme ölçümü (bedava)
-
-```
-Orijinal PRD yetenek sayısı : <N>   (PRD ilk sürümünden)
-Şu anki backlog story sayısı: <M>
-Fazın kapsamındaki REQ      : <K>   (roadmap'ten)
-Backlog'a sonradan eklenen  : <L>   (DECISIONS.md kapsam değişiklikleri)
+⚠ REQs not tied to a GOAL: <list>
+⚠ Stories not tied to a REQ: <list>
+⚠ REQs not covered by any story: <list>
+⚠ Anything from the "not in the MVP" list that has entered the backlog: <list>
 ```
 
-## 3. `product-owner` çağır (kopukluk veya büyüme varsa)
+## 2. Growth measurement (free)
 
 ```
-Orijinal hedefler: <GOAL listesi>
-MVP'de olmayacaklar (orijinal): <liste>
-
-İzlenebilirlik kopuklukları:
-<yukarıdaki liste>
-
-Büyüme: PRD <N> yetenek → backlog <M> story (faz kapsamı <K> REQ)
-Sonradan eklenenler: <liste + tarih + gerekçe>
-
-Mevcut sprint kapasitesi: <bilgi>
-
-Görev: Kapsam denetimi.
-1. Kopuk işler gerçekten gerekli mi? Her biri için: TUT / KES / ERTELE + gerekçe
-2. "Olmayacak" listesini ihlal eden işler var mı
-3. Büyüme haklı mı? (öğrenme sonucu meşru genişleme vs disiplinsizlik)
-4. Kesme sırası: takvim daralırsa hangi işler SIRAYLA çıkarılır
-   Her kesme için: hangi GOAL zarar görür, ne kadar
-5. En küçük değerli sürüm: bugünkü backlog'tan hangi <n> story ile
-   yayınlanabilir bir ürün çıkar
+Original PRD capability count : <N>   (from the first version of the PRD)
+Current backlog story count   : <M>
+REQs in the phase scope       : <K>   (from the roadmap)
+Added to the backlog since    : <L>   (scope changes in DECISIONS.md)
 ```
 
-## 4. Sun
+## 3. Invoke `product-owner` (if there are breaks or growth)
 
 ```
-## Kapsam Denetimi
+Original goals: <GOAL list>
+Not in the MVP (original): <list>
 
-Büyüme: <N> → <M>  (%<artış>)
-İzlenebilirlik: <a> kopuk bağ
+Traceability breaks:
+<the list above>
 
-Kopuk işler
-| Story/REQ | Bağlanmıyor | Öneri | Gerekçe |
-| story-012 | GOAL yok | KES | Hiçbir hedefe hizmet etmiyor |
+Growth: PRD <N> capabilities → backlog <M> stories (phase scope <K> REQs)
+Added later: <list + date + rationale>
 
-"Olmayacak" ihlali: <liste>
+Current sprint capacity: <information>
 
-Kesme sırası (takvim daralırsa)
-1. <story> — GOAL-02 kısmen etkilenir
-2. <story> — etki yok
+Task: a scope audit.
+1. Is the disconnected work actually needed? For each: KEEP / CUT / DEFER + rationale
+2. Is anything violating the "Won't" list
+3. Is the growth justified? (legitimate expansion from learning vs indiscipline)
+4. Cut order: if the schedule tightens, which work is removed IN WHAT ORDER
+   For each cut: which GOAL suffers, and how much
+5. Minimum valuable release: which <n> stories from today's backlog would
+   produce a shippable product
+```
 
-En küçük değerli sürüm: <n> story
-  <liste>
+## 4. Present
+
+```
+## Scope Audit
+
+Growth: <N> → <M>  (<increase>%)
+Traceability: <a> broken links
+
+Disconnected work
+| Story/REQ | Not tied to | Recommendation | Rationale |
+| story-012 | no GOAL | CUT | Serves no goal |
+
+"Won't" violations: <list>
+
+Cut order (if the schedule tightens)
+1. <story> — GOAL-02 partially affected
+2. <story> — no impact
+
+Minimum valuable release: <n> stories
+  <list>
 ```
 
 `AskUserQuestion`:
-- `Önerilen kesmeleri uygula (Önerilen)`
-- `Sadece kopuk işleri kes`
-- `Hiçbir şey kesme — kapasiteyi artıracağım`
-- `En küçük değerli sürüme daralt`
+- `Apply the recommended cuts (Recommended)`
+- `Cut only the disconnected work`
+- `Cut nothing — I will increase capacity`
+- `Narrow down to the minimum valuable release`
 
-## 5. Uygula
+## 5. Apply
 
-Kesilen story'ler **silinmez** — `product/backlog/deferred/` altına taşınır,
-durumu `Ertelendi` olur, gerekçesi yazılır.
-Kararlar `docs/DECISIONS.md`'ye eklenir.
+Cut stories are **not deleted** — they move under `product/backlog/deferred/`, their
+status becomes `Deferred`, and the rationale is recorded.
+Decisions are appended to `docs/DECISIONS.md`.
 
 ---
 
-## Token notu
+## Token note
 
-- İzlenebilirlik denetimi ve büyüme ölçümü **bedava**.
-- Kopukluk yoksa ve büyüme %20'nin altındaysa **agent çağırmadan** temiz raporla.
-- **1 agent çağrısı** (gerekliyse).
+- The traceability audit and growth measurement are **free**.
+- If there are no breaks and growth is under 20%, report a clean result **without
+  invoking an agent**.
+- **1 agent call** (only when needed).

@@ -1,94 +1,94 @@
 # Definition of Done (DoD)
 
-"Bitti" bir histir değil, **kanıttır**. `/dod-check` bu dosyayı kontrol listesi
-olarak kullanır ve eksik kanıt varsa story kapanmaz.
+"Done" is not a feeling — it is **evidence**. `/dod-check` uses this file as a
+checklist and refuses to close a story when evidence is missing.
 
 ---
 
-## Story tipleri ve zorunlu kanıt
+## Story types and required evidence
 
-Her story `/stories` sırasında bir tip alır. Tip, gereken kanıtı belirler.
+Every story is assigned a type during `/stories`. The type determines the evidence.
 
-| Tip | Ne zaman atanır | Zorunlu kanıt |
+| Type | Assigned when | Required evidence |
 |---|---|---|
-| **Logic** | İş kuralı, hesaplama, durum geçişi, validasyon | Geçen unit test: `tests/**/<slug>.test.*` |
-| **Integration** | 2+ bileşen etkileşimi, API çağrısı, kuyruk, dış servis | Geçen integration test + kontrat uyum kanıtı |
-| **Data** | Şema, migration, index, veri dönüşümü | Migration up+down çalıştı + `db/schema.sql` güncel + örnek sorgu planı |
-| **UI** | Ekran, komponent, form, navigasyon | Geçen komponent testi **veya** `docs/qa/evidence/<slug>.md` (adım+beklenen+sonuç) |
-| **Infra** | CI/CD, ortam, IaC, izleme | Pipeline yeşil çıktı kanıtı + rollback adımı yazılı |
-| **Config** | Sadece ayar/veri değişikliği, yeni mantık yok | Smoke test kaydı |
+| **Logic** | Business rule, calculation, state transition, validation | Passing unit test: `tests/**/<slug>.test.*` |
+| **Integration** | 2+ components interacting, API call, queue, external service | Passing integration test + contract-conformance evidence |
+| **Data** | Schema, migration, index, data transformation | Migration up+down executed + `db/schema.sql` current + sample query plan |
+| **UI** | Screen, component, form, navigation | Passing component test **or** `docs/qa/evidence/<slug>.md` (steps + expected + actual) |
+| **Infra** | CI/CD, environment, IaC, monitoring | Green pipeline output + written rollback steps |
+| **Config** | Settings/data change only, no new logic | Smoke test record |
 
-Karma story'lerde **en yüksek riskli tip** geçerlidir.
+For mixed stories, the **highest-risk type** applies.
 
 ---
 
-## Her story için ortak kontrol listesi
+## Common checklist for every story
 
 ```
-[ ] Tüm kabul kriterleri işaretli (story dosyasındaki checkbox'lar)
-[ ] İzlenebilirlik tam: story → REQ-* → GOAL-* ve varsa ADR-* bağlı
-[ ] Tip'e göre zorunlu kanıt mevcut ve geçiyor
-[ ] Kapsam dışı bölümüne dokunulmamış (komşu story'lerin işi yapılmamış)
-[ ] İlgili path kuralları ihlal edilmemiş (.claude/rules/)
-[ ] Yeni bağımlılık eklendiyse ADR var
-[ ] Hata durumları ele alınmış (mutlu yol dışı en az 2 senaryo)
-[ ] Gizli bilgi sızıntısı yok (log, hata mesajı, response)
-[ ] Kod incelemesi verdikti: ONAY veya ŞARTLI-kapatıldı
-[ ] Dokümantasyon etkisi işlenmiş (API değiştiyse openapi.yaml, davranış değiştiyse guides/)
-[ ] docs/DECISIONS.md'ye yeni karar eklendiyse tek satır olarak yazılmış
+[ ] All acceptance criteria checked off (checkboxes in the story file)
+[ ] Traceability complete: story → REQ-* → GOAL-* and ADR-* if applicable
+[ ] Type-required evidence exists and passes
+[ ] Out-of-scope section untouched (no neighbouring story's work done here)
+[ ] No path rule violated (.claude/rules/)
+[ ] If a new dependency was added, an ADR exists
+[ ] Error paths handled (at least 2 non-happy-path scenarios)
+[ ] No secret leakage (logs, error messages, responses)
+[ ] Code review verdict: APPROVED, or CONDITIONAL items closed
+[ ] Documentation impact handled (openapi.yaml if the API changed, guides/ if behaviour changed)
+[ ] If a new decision was made, it is one line in docs/DECISIONS.md
 ```
 
 ---
 
 ## Sprint DoD
 
-Sprint kapanmadan önce:
+Before a sprint closes:
 
 ```
-[ ] Sprint hedefi karşılandı veya sapma gerekçesi yazıldı
-[ ] Tüm story'ler ya DONE ya da gerekçeli olarak backlog'a döndü
-[ ] Regresyon paketi yeşil
-[ ] Açık ŞARTLI kapı maddesi kalmadı (.state/gates.jsonl)
-[ ] docs/CONTEXT.md güncellendi (aşama, devam eden, borç)
-[ ] product/risks.md gözden geçirildi
-[ ] Retro yapıldı, aksiyonlar sahiplendirildi
-```
-
----
-
-## Sürüm DoD (release)
-
-```
-[ ] Sürümdeki tüm story'ler DONE
-[ ] Regresyon + smoke test paketi hedef ortamda yeşil
-[ ] SEC-REVIEW: ONAY (veya kabul edilen risk yazılı)
-[ ] PERF-BUDGET: ONAY (NFR hedefleri ölçülmüş)
-[ ] Migration planı + geri alma (rollback) adımları test edilmiş
-[ ] Gözlemlenebilirlik: log, metrik, alarm tanımlı
-[ ] CHANGELOG.md güncel, sürüm etiketi hazır
-[ ] Kullanıcı/operasyon dokümanı güncel
-[ ] OPS-READY: ONAY
-[ ] CEO-GONOGO: ONAY
+[ ] Sprint goal met, or the variance is documented
+[ ] Every story is either DONE or returned to the backlog with a reason
+[ ] Regression suite green
+[ ] No open CONDITIONAL gate items (.state/gates.jsonl)
+[ ] docs/CONTEXT.md updated (stage, in-progress work, debt)
+[ ] product/risks.md reviewed
+[ ] Retrospective held, actions assigned to owners
 ```
 
 ---
 
-## Kabul kriteri kalitesi
+## Release DoD
 
-`business-analyst` ve `qa-lead` şunları reddeder:
+```
+[ ] Every story in the release is DONE
+[ ] Regression + smoke suites green on the target environment
+[ ] SEC-REVIEW: APPROVED (or accepted risk documented)
+[ ] PERF-BUDGET: APPROVED (NFR targets measured)
+[ ] Migration plan + rollback steps tested
+[ ] Observability: logs, metrics, alerts defined
+[ ] CHANGELOG.md current, release tag ready
+[ ] User/operations documentation current
+[ ] OPS-READY: APPROVED
+[ ] CEO-GONOGO: APPROVED
+```
 
-| Kötü | Neden | İyi |
+---
+
+## Acceptance criteria quality
+
+`business-analyst` and `qa-lead` reject the following:
+
+| Bad | Why | Good |
 |---|---|---|
-| "Sistem hızlı olmalı" | Ölçülemez | "Liste 1000 kayıtta p95 < 400 ms döner" |
-| "Kullanıcı dostu olmalı" | Doğrulanamaz | "Yeni kullanıcı kaydı 3 adımda, yardım almadan tamamlar" |
-| "Hatalar yönetilmeli" | Belirsiz | "Geçersiz e-postada alan altında `E-posta formatı geçersiz` görünür, form gönderilmez" |
-| "Güvenli olmalı" | Kapsamsız | "Yetkisiz kullanıcı `/admin/*` çağrısında 403 alır ve olay `audit_log`'a yazılır" |
+| "The system should be fast" | Not measurable | "The list returns p95 < 400 ms with 1000 records" |
+| "It should be user-friendly" | Not verifiable | "A new user completes registration in 3 steps without help" |
+| "Errors must be handled" | Vague | "An invalid email shows `Invalid email format` under the field and the form does not submit" |
+| "It must be secure" | Unscoped | "An unauthorized user receives 403 on `/admin/*` and the event is written to `audit_log`" |
 
-Format tercih edilen: **Given / When / Then**.
+Preferred format: **Given / When / Then**.
 
 ```
-Given: <önkoşul>
-When: <eylem>
-Then: <gözlemlenebilir sonuç>
-Sınır durumları: <boundary / hata senaryoları>
+Given: <precondition>
+When: <action>
+Then: <observable result>
+Edge cases: <boundary / failure scenarios>
 ```
