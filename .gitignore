@@ -1,0 +1,40 @@
+# Secrets — asla versiyonlanmaz
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+**/secrets/
+
+# Bağımlılıklar
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+bin/
+obj/
+target/
+vendor/
+
+# Build çıktıları
+dist/
+build/
+out/
+.next/
+.nuxt/
+coverage/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# App Studio — üretilen durum (isteğe bağlı: takım çalışmasında versiyonlanabilir)
+.state/agent-log.jsonl
